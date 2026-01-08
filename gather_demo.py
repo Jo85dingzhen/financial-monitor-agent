@@ -1,337 +1,346 @@
-# gatherer_demo.py
-# V3.1: Full Whitelist Update & Reader Mode
+# gather_demo.py
+# Module A: DuckDuckGo News Gatherer
+# Compatible with main.py's Financial Monitor Agent
 
-from __future__ import annotations
-
-import os
-import re
 import hashlib
+import json
+import random
 import time
-from datetime import datetime, timezone
-from urllib.parse import urlparse
-from typing import Optional, List, Dict, Any
+from typing import List, Dict, Any, Optional
+from pydantic import BaseModel
 
-# === 依赖库检查 ===
+# === 依赖检查（静默模式，避免被 import 时打印） ===
+try:
+    from ddgs import DDGS
+except ImportError:
+    raise ImportError("请安装 ddgs: pip install ddgs")
+
 try:
     import requests
     from bs4 import BeautifulSoup
 except ImportError:
-    print("❌ 错误: 缺少必要库。请运行: pip install requests beautifulsoup4")
-    exit()
+    raise ImportError("请安装: pip install requests beautifulsoup4")
 
 try:
     from rich.console import Console
     from rich.table import Table
-    from rich.panel import Panel
-    from rich.text import Text
-    from rich.markdown import Markdown
-    from rich import box
-    from rich.progress import track
     console = Console()
+    HAS_RICH = True
 except ImportError:
-    print("❌ 错误: 缺少 rich 库。请运行: pip install rich")
-    exit()
+    HAS_RICH = False
+    console = None
 
-from pydantic import BaseModel
-from tavily import TavilyClient
-
-# =============== 1. 环境配置 ===============
-
-def load_env(path=".env"):
-    if not os.path.exists(path):
-        return
-    with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            if "=" in line and not line.startswith("#"):
-                key, value = line.strip().split("=", 1)
-                os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
-
-load_env()
-
-if not os.getenv("TAVILY_API_KEY"):
-    console.print("[bold red]⚠️  未找到 TAVILY_API_KEY，请检查 .env 文件[/]")
-
-# =============== 2. 完整白名单配置 (已更新) ===============
-
+# === 配置 ===
 WHITELIST = {
-    # Tier 1: 核心政府/监管机构 (9个)
     "tier1": {
-        "domains": {
-            "pbc.gov.cn": "中国人民银行",
-            "mof.gov.cn": "财政部",
-            "stats.gov.cn": "国家统计局",
-            "gov.cn": "国务院/中国政府网",
-            "csrc.gov.cn": "证监会",
-            "nfra.gov.cn": "金融监管总局",
-            "safe.gov.cn": "外汇局",
-            "ndrc.gov.cn": "国家发改委",
-        },
-        "max_age_days": 30, # 政策类允许回溯
+        "domains": ["pbc.gov.cn", "mof.gov.cn", "gov.cn", "ndrc.gov.cn", 
+                   "stats.gov.cn", "csrc.gov.cn", "nfra.gov.cn", "safe.gov.cn"]
     },
-
-    # Tier 2: 官方/党媒/指定披露机构 (21个)
     "tier2": {
-        "domains": {
-            "cs.com.cn": "中证网/中国证券报",
-            "financialnews.com.cn": "金融时报",
-            "financialnews.com": "中国金融新闻网", # 别名
-            "stcn.com": "证券时报",
-            "paper.ce.cn": "经济日报(电子报)",
-            "ce.cn": "中国经济网",
-            "cnstock.com": "上证报",
-            "bjnew.com.cn": "新京报",
-            "jjckb.cn": "经济参考报",
-            "ceh.com.cn": "中国经济导报", # 补全域名
-            "zhonghongwang.com": "中宏网",
-            "cfen.com.cn": "中国财经报网", # 修正 .com. 写法
-            "chnfund.com": "中国基金报",
-            "cet.com.cn": "中国经济时报/新闻网",
-            "bbtnews.com.cn": "北京商报",
-            "cbimc.cn": "中国银行保险报", # 修正 www.
-            "eeo.com.cn": "经济观察报",
-            "cb.com.cn": "中国经营报",
-            "ccn.com.cn": "中国消费者报", # 补全域名
-        },
-        "max_age_days": 7,
-    },
-
-    # Tier 2.5: 市场化核心媒体 (15个)
-    "tier2_5": {
-        "domains": {
-            "caixin.com": "财新",
-            "21jingji.com": "21世纪经济报道",
-            "cnfin.com": "新华财经",
-            "nbd.com.cn": "每日经济新闻",
-            "yicai.com": "第一财经",
-            "jwview.com": "中新经纬",
-            "lanjinger.com": "蓝鲸财经",
-            "cls.cn": "财联社",
-            "sfccn.com": "南方财经网",
-            "time-weekly.com": "时代周报",
-            "thepaper.cn": "澎湃新闻",
-            "jiemian.com": "界面新闻",
-            "thecover.cn": "封面新闻",
-            "chinatimes.net.cn": "华夏时报",
-            "shobserver.com": "上观新闻",
-        },
-        "max_age_days": 3, # 市场新闻时效性要求高
+        "domains": ["caixin.com", "cls.cn", "yicai.com", "21jingji.com", 
+                   "sina.com.cn", "news.cn", "stcn.com", "cs.com.cn", 
+                   "cnstock.com", "financialnews.com.cn", "ce.cn", 
+                   "jiemian.com", "thepaper.cn", "eeo.com.cn", "nbd.com.cn"]
     }
 }
 
-# 域名别名映射 (解决 www. 或不同后缀指向同一家的情况)
-DOMAIN_ALIASES = {
-    "www.financialnews.com.cn": "financialnews.com.cn",
-    "www.cbimc.cn": "cbimc.cn",
-    "paper.ce.cn": "ce.cn", # 归类到中经网体系
-}
-
-# =============== 3. 数据模型 ===============
-
+# === 数据模型（与 main.py 对齐） ===
 class SourceInfo(BaseModel):
     url: str
     domain: str
-    tier: Optional[str] = None
-    outlet_name: Optional[str] = None
-    whitelisted: bool = False
+    tier: str
+    outlet_name: str  # main.py 需要这个字段
+    whitelisted: bool
 
 class RawArticle(BaseModel):
     article_id: str
     url: str
     title: str
-    snippet: Optional[str] = None
-    full_text: Optional[str] = None
+    snippet: str
+    full_text: str = ""
     source: SourceInfo
-    category: str
-    published_at: Optional[str] = None
-    eligible_for_event: bool = False
-    drop_reason: Optional[str] = None
+    eligible_for_event: bool = False  # main.py 可能需要
+    publish_date: str = ""
 
-# =============== 4. 核心功能 ===============
-
-def get_tavily_client() -> TavilyClient:
-    return TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
-
-def tavily_search(query: str, max_results: int = 5) -> List[Dict[str, Any]]:
-    client = get_tavily_client()
-    try:
-        response = client.search(query=query, search_depth="advanced", max_results=max_results)
-        return response.get("results", [])
-    except Exception as e:
-        console.print(f"[red]Tavily 搜索失败: {e}[/]")
-        return []
+# === 工具函数 ===
+def _log(msg: str, level: str = "info"):
+    """内部日志（可选 Rich）"""
+    if HAS_RICH and console:
+        colors = {"info": "cyan", "success": "green", "warning": "yellow", 
+                 "error": "red", "debug": "dim"}
+        console.print(f"[{colors.get(level, 'white')}]{msg}[/]")
+    else:
+        print(msg)
 
 def resolve_source(url: str) -> SourceInfo:
-    domain = urlparse(url).netloc.lower().replace("www.", "")
-    domain = DOMAIN_ALIASES.get(domain, domain)
+    """解析来源信息"""
+    try:
+        domain = url.split("/")[2].replace("www.", "")
+    except:
+        domain = "unknown"
     
-    # 遍历三层白名单
-    for tier, cfg in WHITELIST.items():
-        if domain in cfg["domains"]:
-            return SourceInfo(
-                url=url, 
-                domain=domain, 
-                tier=tier, 
-                outlet_name=cfg["domains"][domain], 
-                whitelisted=True
+    tier = "unknown"
+    whitelisted = False
+    
+    for t, cfg in WHITELIST.items():
+        if any(d in domain for d in cfg["domains"]):
+            tier = t
+            whitelisted = True
+            break
+    
+    return SourceInfo(
+        url=url,
+        domain=domain,
+        tier=tier,
+        outlet_name=domain,  # 与 main.py 对齐
+        whitelisted=whitelisted
+    )
+
+# === 搜索策略 ===
+def _search_ddgs(query: str, region: str = 'wt-wt', timelimit: Optional[str] = None, 
+                fetch_count: int = 30) -> List[Dict]:
+    """
+    底层 DuckDuckGo 搜索
+    
+    Args:
+        query: 搜索词（原样传递，支持 site:A OR site:B 语法）
+        region: 地区代码
+        timelimit: 时间限制 ('d'/'w'/'m'/'y'/None)
+        fetch_count: 内部抓取条数（不暴露给外部）
+    """
+    try:
+        ddgs = DDGS()  # 每次调用创建实例，避免线程问题
+        
+        # 根据是否有时间限制调用
+        if timelimit:
+            results = ddgs.text(query, region=region, timelimit=timelimit, max_results=fetch_count)
+        else:
+            results = ddgs.text(query, region=region, max_results=fetch_count)
+        
+        if results is None:
+            return []
+        
+        # 消费 generator
+        return list(results)
+        
+    except Exception as e:
+        _log(f"搜索异常: {str(e)[:100]}", "error")
+        return []
+
+def _multi_strategy_search(query: str, days: int = 7, fetch_count: int = 30) -> tuple[List[Dict], str]:
+    """
+    多策略搜索（带重试和回退）
+    
+    Returns:
+        (results, strategy_path)
+    """
+    # 根据天数确定时间限制
+    if days <= 1:
+        timelimit = 'd'
+    elif days <= 7:
+        timelimit = 'w'
+    elif days <= 30:
+        timelimit = 'm'
+    elif days <= 365:
+        timelimit = 'y'
+    else:
+        timelimit = None
+    
+    strategy_path = []
+    
+    # 策略A: 带时间限制
+    if timelimit:
+        strategy_path.append(f"A(时限:{timelimit})")
+        for attempt in range(2):  # 指数退避重试
+            results = _search_ddgs(query, region='wt-wt', timelimit=timelimit, fetch_count=fetch_count)
+            if results:
+                return results, "→".join(strategy_path)
+            if attempt < 1:
+                time.sleep(1 + random.random())
+    
+    # 策略B: 无时间限制
+    strategy_path.append("B(无时限)")
+    results = _search_ddgs(query, region='wt-wt', timelimit=None, fetch_count=fetch_count)
+    if results:
+        return results, "→".join(strategy_path)
+    
+    # 策略C: 区域回退
+    for region in ['us-en', 'cn-zh']:
+        strategy_path.append(f"C({region})")
+        results = _search_ddgs(query, region=region, timelimit=None, fetch_count=fetch_count)
+        if results:
+            return results, "→".join(strategy_path)
+    
+    return [], "→".join(strategy_path) + "(失败)"
+
+# === 主采集函数（对外接口） ===
+def gather(queries: List[str], days: int = 3, max_results: int = 5, 
+          save_json: bool = False, output_path: str = "gathered_results.json",
+          **kwargs) -> List[RawArticle]:
+    """
+    主采集函数（与 main.py 接口对齐）
+    
+    Args:
+        queries: 查询词列表（支持 site:A OR site:B 语法）
+        days: 时间范围（天数）
+            - 1 = 最近1天
+            - 7 = 最近1周
+            - 30 = 最近1月
+            - 365 = 最近1年
+            - 9999 = 不限制
+        max_results: 每个 query 最多返回多少条"白名单命中且去重后"的 RawArticle
+        save_json: 是否保存 JSON（CLI 调试用，server 模式建议关闭）
+        output_path: JSON 保存路径
+        **kwargs: 预留扩展参数（如 extract_full_text, proxy 等）
+    
+    Returns:
+        List[RawArticle]: 采集结果列表
+    """
+    articles = []
+    
+    # 局部统计（避免全局污染）
+    stats = {
+        "total_queries": len(queries),
+        "total_raw_results": 0,
+        "total_filtered": 0,
+        "total_hits": 0,
+        "strategy_paths": {}
+    }
+    
+    _log(f"🔍 启动采集 (查询数: {len(queries)}, 时间范围: {days}天, 每查询上限: {max_results}条)", "info")
+    
+    for idx, query in enumerate(queries, 1):
+        _log(f"\n[{idx}/{len(queries)}] 查询: {query[:60]}...", "info")
+        
+        # 多策略搜索（内部抓取 30 条原始结果）
+        results, strategy_path = _multi_strategy_search(query, days=days, fetch_count=30)
+        stats["strategy_paths"][query] = strategy_path
+        
+        if not results:
+            _log(f"  ✗ 无结果 (策略: {strategy_path})", "error")
+            continue
+        
+        _log(f"  ✓ 获得 {len(results)} 条原始结果 (策略: {strategy_path})", "success")
+        stats["total_raw_results"] += len(results)
+        
+        found = 0
+        filtered = 0
+        
+        for item in results:
+            url = item.get("href", "")
+            title = item.get("title", "")
+            snippet = item.get("body", "")
+            
+            if not url or not title:
+                continue
+            
+            source = resolve_source(url)
+            
+            # 白名单过滤
+            if not source.whitelisted:
+                filtered += 1
+                if filtered <= 3:  # 只显示前3条
+                    _log(f"    - 过滤: {source.domain}", "debug")
+                continue
+            
+            # 去重
+            if any(a.url == url for a in articles):
+                continue
+            
+            _log(f"    ✓ 命中: {source.tier} - {source.domain}", "success")
+            _log(f"      {title[:60]}...", "debug")
+            
+            # 构造 RawArticle
+            article = RawArticle(
+                article_id=hashlib.md5(url.encode()).hexdigest(),
+                url=url,
+                title=title,
+                snippet=snippet,
+                full_text="",  # 如果需要提取全文，在这里调用 extract_body()
+                source=source,
+                eligible_for_event=True,
+                publish_date=""  # DuckDuckGo 不提供日期，保持为空
             )
             
-    return SourceInfo(url=url, domain=domain, whitelisted=False)
-
-def extract_article_body(url: str, timeout: int = 15) -> str:
-    """下载并清洗网页正文"""
-    try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
-        }
-        resp = requests.get(url, headers=headers, timeout=timeout)
-        resp.encoding = resp.apparent_encoding
-        
-        soup = BeautifulSoup(resp.text, "html.parser")
-        
-        # 移除干扰元素
-        for tag in soup(["script", "style", "nav", "header", "footer", "iframe", "noscript", "aside"]):
-            tag.decompose()
+            articles.append(article)
+            found += 1
             
-        # 智能提取正文
-        article = soup.find("article")
-        if not article:
-            # 备选方案：找字数最多的 div
-            text_blocks = []
-            for div in soup.find_all("div"):
-                # 简单过滤：类名包含 content, article, body 的优先 (可选优化)
-                text = div.get_text(strip=True)
-                if len(text) > 150: 
-                    text_blocks.append((len(text), div))
-            
-            if text_blocks:
-                text_blocks.sort(key=lambda x: x[0], reverse=True)
-                article = text_blocks[0][1]
-            else:
-                article = soup.body
-
-        if not article: return ""
-
-        text = article.get_text(separator="\n\n")
-        return re.sub(r'\n\s*\n', '\n\n', text).strip()
-
-    except Exception as e:
-        return f"[Error: {str(e)}]"
-
-# =============== 5. 主流程 ===============
-
-def gather(queries: List[str]) -> List[RawArticle]:
-    all_results = []
-    
-    # 1. 搜索阶段
-    raw_items = []
-    with console.status("[bold green]🔍 正在基于新白名单全网搜索...[/]") as status:
-        for q in queries:
-            status.update(f"搜索: {q}")
-            items = tavily_search(q, max_results=4)
-            raw_items.extend(items)
-    
-    # 去重
-    seen_urls = set()
-    unique_items = []
-    for item in raw_items:
-        if item['url'] not in seen_urls:
-            unique_items.append(item)
-            seen_urls.add(item['url'])
-
-    # 2. 抓取与过滤阶段
-    console.print(f"[cyan]发现 {len(unique_items)} 条线索，开始深度过滤...[/]")
-    
-    for item in track(unique_items, description="下载与清洗中..."):
-        url = item["url"]
-        source = resolve_source(url)
+            if found >= max_results:
+                break
         
-        # 白名单检查
-        if not source.whitelisted:
-            all_results.append(RawArticle(
-                article_id="0", url=url, title=item["title"], source=source, 
-                category="unknown", content_type="mixed", eligible_for_event=False, drop_reason="非白名单"
-            ))
-            continue
-            
-        # 全文下载
-        full_text = extract_article_body(url)
+        if filtered > 3:
+            _log(f"    ... (过滤了其他 {filtered - 3} 条)", "debug")
         
-        if len(full_text) < 50:
-            eligible = False
-            drop_reason = "正文内容过少"
-        else:
-            eligible = True
-            drop_reason = None
-
-        # 简单分类
-        if source.tier == "tier1":
-            category = "policy"
-        elif "财报" in item["title"] or "业绩" in item["title"]:
-            category = "company"
-        else:
-            category = "market"
+        stats["total_filtered"] += filtered
+        stats["total_hits"] += found
         
-        all_results.append(RawArticle(
-            article_id=hashlib.md5(url.encode()).hexdigest(),
-            url=url, 
-            title=item.get("title", ""), 
-            snippet=item.get("snippet", ""), 
-            full_text=full_text,
-            source=source,
-            category=category, 
-            content_type="fact",
-            eligible_for_event=eligible,
-            drop_reason=drop_reason
-        ))
+        _log(f"  📈 本查询: 命中 {found}, 过滤 {filtered}", "info")
+    
+    # 打印统计摘要
+    _log(f"\n{'='*60}", "info")
+    _log(f"📊 采集完成: 共 {len(articles)} 条结果", "success")
+    _log(f"  总查询数: {stats['total_queries']}", "info")
+    _log(f"  原始结果数: {stats['total_raw_results']}", "info")
+    _log(f"  过滤结果数: {stats['total_filtered']}", "info")
+    _log(f"  命中白名单: {stats['total_hits']}", "info")
+    _log(f"{'='*60}", "info")
+    
+    # 可选：保存 JSON
+    if save_json and articles:
+        try:
+            with open(output_path, "w", encoding="utf-8") as f:
+                json.dump([art.model_dump() for art in articles], f, ensure_ascii=False, indent=2)
+            _log(f"💾 已保存: {output_path}", "success")
+        except Exception as e:
+            _log(f"⚠ 保存失败: {e}", "warning")
+    
+    return articles
 
-    return all_results
-
-# =============== 6. 结果展示 (Reader View) ===============
-
+# === 可视化函数（供 main.py 调用） ===
 def print_reader_view(articles: List[RawArticle]):
-    valid_news = [a for a in articles if a.eligible_for_event]
-    
-    console.print("\n")
-    console.rule("[bold cyan]📰 财经深度阅读模式 (V3.1)[/]")
-    console.print(f"[dim]白名单覆盖: {sum(len(v['domains']) for v in WHITELIST.values())} 家核心媒体[/]", justify="center")
-    
-    if not valid_news:
-        console.print("\n[bold red]⚠️ 本次搜索未命中白名单媒体。建议:[/]")
-        console.print("1. 检查搜索关键词是否过于冷门")
-        console.print("2. 尝试添加 'site:domain.com' 指定搜索")
+    """打印采集结果的阅读视图"""
+    if not articles:
+        _log("\n⚠ 无采集结果", "warning")
         return
-
-    for i, news in enumerate(valid_news, 1):
-        # 颜色区分 Tier
-        color = "red" if news.source.tier == "tier1" else ("blue" if news.source.tier == "tier2" else "green")
+    
+    if HAS_RICH and console:
+        table = Table(title="📰 采集结果预览", show_lines=True)
+        table.add_column("ID", width=4, justify="center")
+        table.add_column("标题", width=50)
+        table.add_column("来源", width=20)
+        table.add_column("层级", width=8)
         
-        console.print(f"\n[bold white on {color}] {i}. {news.title} [/]")
-        console.print(f"[dim]来源: {news.source.outlet_name} ({news.source.tier.upper()}) | 字数: {len(news.full_text)}[/]")
-        console.print(f"[link={news.url}]🔗 原文链接[/link]")
+        for i, art in enumerate(articles, 1):
+            table.add_row(
+                str(i),
+                art.title[:47] + "..." if len(art.title) > 50 else art.title,
+                art.source.domain,
+                art.source.tier
+            )
         
-        # 预览正文 (前800字)
-        preview_text = news.full_text[:800] + "\n\n...(剩余内容省略)..." if len(news.full_text) > 800 else news.full_text
-        
-        text_panel = Panel(
-            Markdown(preview_text),
-            border_style="grey70",
-            box=box.SIMPLE,
-            title="📄 正文预览",
-            title_align="left"
-        )
-        console.print(text_panel)
-        console.print("-" * 40, style="dim")
+        console.print("\n")
+        console.print(table)
+    else:
+        print("\n" + "="*60)
+        print("📰 采集结果预览")
+        print("="*60)
+        for i, art in enumerate(articles, 1):
+            print(f"\n[{i}] {art.title}")
+            print(f"    来源: {art.source.domain} ({art.source.tier})")
+            print(f"    URL: {art.url}")
 
-# =============== 7. 执行入口 ===============
-
+# === CLI 测试入口（不会被 import 时执行） ===
 if __name__ == "__main__":
-    # 测试不同层级的媒体
-    QUERIES = [
-        "site:pbc.gov.cn 货币政策",       # Tier 1
-        "site:caixin.com 宏观数据",       # Tier 2.5
-        "site:stcn.com 上市公司",         # Tier 2
-        "site:eeo.com.cn 经济观察"        # Tier 2 (新增测试)
+    test_queries = [
+        "site:pbc.gov.cn 货币政策",
+        "site:caixin.com 金融监管"
     ]
     
-    results = gather(QUERIES)
-    print_reader_view(results)
+    articles = gather(
+        queries=test_queries,
+        days=7,
+        max_results=3,
+        save_json=True
+    )
+    
+    print_reader_view(articles)

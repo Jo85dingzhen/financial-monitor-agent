@@ -1,27 +1,28 @@
 # journalist_demo.py
-# Module C: The Journalist (Structured Drafting)
-# V1.0: DeepSeek-Powered Academic Writer
+# Module C: The Journalist (DeepSeek & LangChain Edition)
+# V5.1: Fixed Prompt Template & JSON Escaping
 
 import os
-import json
-from typing import List, Dict, Optional
-from pydantic import BaseModel
+from typing import List, Optional
 
 # === 1. 依赖库 ===
-try:
-    from openai import OpenAI
-except ImportError:
-    print("❌ 错误: 缺少 openai 库。")
-    exit()
+
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import PydanticOutputParser
+from pydantic import BaseModel, Field
+# 如果这里报错，请把下方终端里的【具体红字】截图发给我！
+# 可能是 "cannot import name 'Field' from 'pydantic'" 这种版本冲突
 
 try:
     from rich.console import Console
     from rich.panel import Panel
-    from rich.markdown import Markdown
     from rich import box
     console = Console()
 except ImportError:
-    pass
+    class Console:
+        def print(self, *args, **kwargs): print(*args)
+    console = Console()
 
 # === 2. 引用上游数据结构 ===
 try:
@@ -30,133 +31,143 @@ except ImportError:
     print("❌ 无法找到 analyst_demo.py")
     exit()
 
-# === 3. 定义 Module C 的输出结构 ===
-
+# === 3. 数据模型 ===
 class NewsReport(BaseModel):
-    event_id: str
-    title: str          # 学术级标题
-    summary: str        # 100字以内的核心摘要
-    key_points: List[str] # 3-5个关键事实/数据
-    source_refs: List[str] # 引用来源 (用于溯源)
-    impact_score: float
+    event_id: str = Field(default="", description="内部事件ID (LLM无需填写)")
+    title: str = Field(description="专业财经标题")
+    summary: str = Field(description="核心执行摘要")
+    background: str = Field(description="事件背景与历史回溯 (300字+)")
+    analysis: str = Field(description="深度市场分析与逻辑推演 (400字+)")
+    outlook: str = Field(description="未来展望与风险提示 (200字+)")
+    key_points: List[str] = Field(description="关键数据点列表")
+    source_refs: List[str] = Field(description="引用来源列表")
+    impact_score: int = Field(description="影响力评分 0-100")
 
 # === 4. 核心类: 撰稿人 Agent ===
 
 class JournalistAgent:
     def __init__(self):
-        # 复用 DeepSeek Key
-        self.api_key = os.getenv("DEEPSEEK_API_KEY") or os.getenv("OPENAI_API_KEY")
-        if not self.api_key:
-            raise ValueError("Missing API Key for Journalist")
-        
-        self.client = OpenAI(
-            api_key=self.api_key, 
-            base_url="https://api.deepseek.com"
+        # 1. 初始化 LangChain 的 ChatModel
+        api_key = os.getenv("DEEPSEEK_API_KEY") or os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("❌ Missing API Key. Please set DEEPSEEK_API_KEY in .env")
+
+        self.llm = ChatOpenAI(
+            model="deepseek-chat",  # DeepSeek V3
+            openai_api_key=api_key,
+            openai_api_base="https://api.deepseek.com", 
+            temperature=0.3,
+            max_tokens=4000
         )
-
-    def _generate_single_report(self, event: Event) -> Optional[NewsReport]:
-        """对单个事件进行学术化撰写"""
         
-        # 1. 准备上下文素材 (Strict Context)
-        # 我们把 Module A 抓到的正文片段喂给它，要求它只能用这些信息
-        context_text = ""
-        for i, art in enumerate(event.articles):
-            context_text += f"Source [{i+1}] ({art.source.outlet_name}): {art.title}\nContent: {art.snippet}\n---\n"
+        # 2. 初始化解析器
+        self.parser = PydanticOutputParser(pydantic_object=NewsReport)
 
-        # 2. 构建 Prompt (Zero-Trust Logic)
-        system_prompt = """
-        你是一名专业的宏观经济分析师和学术编辑。你的任务是根据提供的素材撰写一份"财经事件简报"。
-        
-        核心原则 (Zero-Trust)：
-        1. **严禁编造**：所有的数字、日期、人名必须来自提供的 [Source] 素材。如果素材里没提，就不要写。
-        2. **客观中立**：去除所有情绪化形容词（如"震惊"、"暴跌"、"血洗"）。使用学术词汇（如"下行"、"调整"、"波动"）。
-        3. **格式严格**：必须返回合法的 JSON 格式。
-        
-        输出结构要求：
-        - title: 不超过 20 字，包含核心主体与动作。
-        - summary: 80-100 字，概括事件全貌。
-        - key_points: 提取 3 个关键数据或事实（如金额、利率变化幅度、具体时间）。
-        """
-
-        user_prompt = f"""
-        请根据以下素材撰写报告：
-        {context_text}
-        
-        请输出如下 JSON 格式：
-        {{
-            "title": "...",
-            "summary": "...",
-            "key_points": ["点1", "点2", "点3"]
-        }}
-        """
-
-        # 3. 调用 LLM
-        try:
-            response = self.client.chat.completions.create(
-                model="deepseek-chat",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                response_format={ "type": "json_object" },
-                temperature=0.2 # 低温，确保事实准确
-            )
-            data = json.loads(response.choices[0].message.content)
-            
-            # 4. 组装结果
-            return NewsReport(
-                event_id=event.event_id,
-                title=data.get("title", event.main_title),
-                summary=data.get("summary", event.summary),
-                key_points=data.get("key_points", []),
-                source_refs=[a.source.outlet_name for a in event.articles],
-                impact_score=event.score
-            )
-            
-        except Exception as e:
-            console.print(f"[red]撰稿失败 (Event ID: {event.event_id}): {e}[/]")
-            return None
-
-    def write_reports(self, events: List[Event]) -> List[NewsReport]:
-        """批量处理入口"""
+    def write_reports(self, events: List[Event], max_events: int = 3, word_guideline: str = "") -> List[NewsReport]:
+        """批量撰写入口"""
         reports = []
         if not events:
             return []
 
-        console.print(f"[cyan]✍️ 撰稿人 (Journalist) 正在撰写 {len(events)} 份研报...[/]")
+        target_events = events[:max_events]
+        console.print(f"[cyan]✍️  DeepSeek Journalist 正在撰写 {len(target_events)} 篇深度研报...[/]")
         
-        # 限制：只处理前 10 大事件 (根据设计文档)
-        top_events = events[:10]
-        
-        for event in top_events:
-            report = self._generate_single_report(event)
-            if report:
-                reports.append(report)
+        for i, event in enumerate(target_events, 1):
+            try:
+                # 1. 准备素材
+                context_text = ""
+                for art in event.articles:
+                    snippet = getattr(art, 'full_text', art.snippet) or art.snippet
+                    context_text += f"- Source: {art.source.outlet_name}\n  Content: {snippet[:800]}...\n\n"
+
+                # 2. 生成单篇报告
+                report = self._generate_single_report(context_text, word_guideline)
+                
+                if report:
+                    # 补全元数据
+                    report.source_refs = list(set([a.source.outlet_name for a in event.articles]))
+                    report.impact_score = event.score 
+                    reports.append(report)
+                    
+                    # 3. 实时展示
+                    self._print_realtime_card(i, report)
+            
+            except Exception as e:
+                console.print(f"[red]❌ 撰写失败 (Event #{i}): {e}[/]")
+                continue
                 
         return reports
 
-# === 5. 可视化面板 ===
+    def _generate_single_report(self, article_content: str, word_guideline: str) -> Optional[NewsReport]:
+        """
+        LangChain 核心流水线 (修复了 Prompt 转义问题)
+        """
+        
+        # === System Prompt ===
+        # ⚠️ 关键修改 1: 去掉前面的 'f'，不要让 Python 预处理字符串
+        # ⚠️ 关键修改 2: JSON 的花括号必须写成 {{ 和 }} (双花括号)
+        # ⚠️ 关键修改 3: 变量 {word_guideline} 保持单花括号
+        
+        system_prompt = """
+        你是一名华尔街顶尖的宏观经济分析师。你的任务是根据提供的素材撰写一份**深度财经研报**。
 
-def print_journalist_dashboard(reports: List[NewsReport]):
-    console.print("\n")
-    console.rule("[bold green]📜 Module C: 最终财经简报 (Final Report)[/]")
-    
-    for i, r in enumerate(reports, 1):
-        # 样式构建
-        content = f"[bold]{r.summary}[/bold]\n\n"
+        【核心原则】
+        1. **严禁编造**：所有的数字、日期、人名必须来自素材。
+        2. **客观中立**：去除情绪化形容词，使用学术词汇。
+        3. **格式要求**：{word_guideline}
+
+        【输出格式】
+        你必须严格输出符合以下 JSON 结构的 valid JSON：
+        {{
+            "title": "专业标题",
+            "summary": "150字摘要",
+            "background": "300字+ 深度背景，详述起因",
+            "analysis": "400字+ 核心分析，包含数据支撑和逻辑推演",
+            "outlook": "200字+ 展望与风险提示",
+            "key_points": ["关键点1", "关键点2"],
+            "impact_score": 85,
+            "source_refs": []
+        }}
+        """
+
+        # === User Prompt ===
+        user_prompt = """
+        请基于以下素材撰写研报：
+        ---
+        {article_content}
+        ---
+        """
+
+        # === 组装 Chain ===
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", system_prompt),
+            ("user", user_prompt)
+        ])
+
+        # Chain: 提示词 -> 大模型 -> 解析器
+        chain = prompt | self.llm | self.parser
         
-        if r.key_points:
-            content += "[dim]关键事实 (Key Points):[/dim]\n"
-            for kp in r.key_points:
-                content += f"• {kp}\n"
-        
-        content += "\n[italic grey50]来源: " + ", ".join(set(r.source_refs)) + "[/]"
+        # === 执行 ===
+        # ⚠️ 关键修改 4: 在这里传入真正的变量数据
+        return chain.invoke({
+            "word_guideline": word_guideline,
+            "article_content": article_content
+        })
+
+    def _print_realtime_card(self, index: int, report: NewsReport):
+        """UI 辅助"""
+        content = f"[bold]{report.title}[/bold]\n\n"
+        content += f"{report.summary}\n\n"
+        content += "[dim]Analysis Preview:[/dim] " + report.analysis[:100] + "..."
         
         panel = Panel(
             content,
-            title=f"[bold green]#{i} {r.title}[/] (Impact: {r.impact_score})",
+            title=f"[bold green]Draft #{index} Generated[/]",
             border_style="green",
-            box=box.HEAVY,
-            expand=True
+            box=box.ROUNDED
         )
         console.print(panel)
+
+# 测试代码
+if __name__ == "__main__":
+    pass
