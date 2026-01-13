@@ -78,8 +78,6 @@ gathered_results.json: 采集模块的调试快照。
 4. 自定义搜索词 (Customization)
 如果您想监控特定的财经话题，请修改 main.py 底部的 initial_state：
 
-Python
-
 # main.py
 initial_state = {
     "queries": [
@@ -91,7 +89,7 @@ initial_state = {
 }
 🚀 快速安装 (Installation)
 
-1. 环境准备
+# 1. 环境准备
 
 # 创建并激活虚拟环境 (推荐)
 python -m venv venv
@@ -99,15 +97,19 @@ python -m venv venv
 venv\Scripts\activate
 # Mac/Linux:
 source venv/bin/activate
-2. 安装依赖
+
+# 2. 安装依赖
 
 pip install -r requirements.txt
 
-3. 配置 API Key
+# 3. 配置 API Key
 
 在项目根目录下创建一个 .env 文件，填入 Key：
 
-# .env 
+.env 
+
 DEEPSEEK_API_KEY=sk-your-api-key-here
-# 或者
+
+或者
+
 OPENAI_API_KEY=sk-your-api-key-here
