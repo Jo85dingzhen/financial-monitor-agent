@@ -14,7 +14,7 @@ debug_logs/
 
 
 gather_tavily_demo.py
-gathered_result_frountend.py
+frontend.py
 server.py
 gathered_results.json
 
