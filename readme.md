@@ -1,12 +1,13 @@
-📈 Financial Monitor Agent (基于 LangGraph 的全自动财经研报系统)
+# 📈 Financial Monitor Agent
+ (基于 LangGraph 的全自动财经研报系统)
 Automated, Reliable, Traceable. 一个基于 Multi-Agent 架构的智能财经监控系统，旨在解决信息过载与大模型幻觉问题。
 
-📖 项目简介 (Introduction)
+# 📖 项目简介 (Introduction)
 Financial Monitor Agent 是一个全自动化的财经情报生产流水线。它利用 LangGraph 编排多个职能明确的 AI 智能体，模拟了人类专业投研团队的工作流：从全网搜集、去重聚类、研报撰写，到合规审计与最终发布。
 
 本项目旨在探索 Agentic AI 在垂直领域的应用，特别是如何通过**“白名单机制”和“自我审计回路（Self-Correction）”**来降低 LLM 的幻觉率，实现可追溯、高信度的内容生成。
 
-🏗️ 系统架构 (System Architecture)
+# 🏗️ 系统架构 (System Architecture)
 系统采用有向无环图（DAG）与循环（Cycle）结合的状态机设计，包含五个核心节点：
 
 Module A (The Gatherer): 基于 DuckDuckGo 的多策略搜索器。内置 Tier 1/2 权威媒体白名单（如央行、财新），从源头过滤噪音。
@@ -19,11 +20,11 @@ Module D (The Auditor): (核心创新) 系统的“安全阀”。对生成的�
 
 Module E (The Publisher): 将经过审计的内容渲染为标准 Markdown 日报并落盘。
 
-🕹️ 操作指南 (Operation Guide)
-1. 启动程序
-在终端中运行主程序：
+# 🕹️ 操作指南 (Operation Guide)
 
-Bash
+1. 启动程序
+
+在终端中运行主程序：
 
 python main.py
 2. 运行时观测 (Runtime Monitoring)
@@ -89,10 +90,8 @@ initial_state = {
     # ...
 }
 🚀 快速安装 (Installation)
-1. 环境准备
-确保您的系统已安装 Python 3.10+。
 
-Bash
+1. 环境准备
 
 # 创建并激活虚拟环境 (推荐)
 python -m venv venv
@@ -101,13 +100,12 @@ venv\Scripts\activate
 # Mac/Linux:
 source venv/bin/activate
 2. 安装依赖
-Bash
 
 pip install -r requirements.txt
-3. 配置 API Key
-在项目根目录下创建一个 .env 文件，填入 Key：
 
-代码段
+3. 配置 API Key
+
+在项目根目录下创建一个 .env 文件，填入 Key：
 
 # .env 
 DEEPSEEK_API_KEY=sk-your-api-key-here

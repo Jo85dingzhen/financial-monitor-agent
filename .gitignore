@@ -1,9 +1,22 @@
-# 忽略敏感配置文件
-.env
-
-# 忽略 Python 缓存
 __pycache__/
-*.pyc
+*.py[cod]
+*.log
+*.env
+.env
+.venv/
+venv/
+.idea/
+.vscode/
 
-# 忽略系统文件
-.DS_Store
+
+daily_reports/
+debug_logs/
+
+
+gather_tavily_demo.py
+gathered_result_frountend.py
+server.py
+gathered_results.json
+
+*.tmp
+*.cache
