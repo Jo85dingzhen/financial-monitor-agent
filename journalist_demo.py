@@ -42,6 +42,11 @@ class NewsReport(BaseModel):
     key_points: List[str] = Field(description="关键数据点列表")
     source_refs: List[str] = Field(description="引用来源列表")
     impact_score: int = Field(description="影响力评分 0-100")
+    # ⭐ 新增：内部字段，记录“网站 + 标题”
+    source_articles: List[str] = Field(
+        default_factory=list,
+        description="内部字段：用于记录报告所依据的新闻文章（网站｜标题），LLM无需填写"
+    )
 
 # === 4. 核心类: 撰稿人 Agent ===
 
@@ -84,11 +89,25 @@ class JournalistAgent:
                 report = self._generate_single_report(context_text, word_guideline)
                 
                 if report:
-                    # 补全元数据
-                    report.source_refs = list(set([a.source.outlet_name for a in event.articles]))
-                    report.impact_score = event.score 
+                    # ⭐ 绑定来源事件，方便后续审计 & 溯源
+                    report.event_id = event.event_id
+
+                    # 媒体列表（去重），比如 ["stats.gov.cn", "cs.com.cn"]
+                    report.source_refs = list(
+                        {a.source.outlet_name for a in event.articles}
+                    )
+
+                    # ⭐ 记录“网站｜标题”，供你人工检查（可视化）
+                    report.source_articles = [
+                        f"{a.source.domain}｜{a.title}｜{a.url}"
+                        for a in event.articles
+                    ]
+
+                    # 使用 Analyst 给的事件分数作为影响力打分初始值
+                    report.impact_score = int(event.score * 10) if event.score <= 10 else int(event.score)
+
                     reports.append(report)
-                    
+
                     # 3. 实时展示
                     self._print_realtime_card(i, report)
             
@@ -158,6 +177,13 @@ class JournalistAgent:
         """UI 辅助"""
         content = f"[bold]{report.title}[/bold]\n\n"
         content += f"{report.summary}\n\n"
+        if report.source_articles:
+            content += "[dim]Sources:[/dim]\n"
+            # 只预览前 2 条来源
+            for sa in report.source_articles[:2]:
+                content += f"- {sa}\n"
+            if len(report.source_articles) > 2:
+                content += f"... 共 {len(report.source_articles)} 篇\n\n"
         content += "[dim]Analysis Preview:[/dim] " + report.analysis[:100] + "..."
         
         panel = Panel(
