@@ -62,8 +62,29 @@ class PublisherAgent:
                 md += f"**Analysis**: \n{report.analysis}\n\n"
             if report.outlook:
                 md += f"**Outlook**: \n{report.outlook}\n\n"
-                
-            md += f"> **Sources**: {', '.join(report.source_refs)}\n\n---\n\n"
+
+            # ⭐ 原有源：保留一行媒体名概览
+            if report.source_refs:
+                md += f"> **Source Media**: {', '.join(report.source_refs)}\n\n"
+
+            # ⭐ 新增：详细溯源（网站 + 标题 + URL）
+            source_articles = getattr(report, "source_articles", None)
+            if source_articles:
+                for sa in source_articles:
+                    # sa 形如 "domain｜title｜url"
+                    try:
+                        domain, title, url = sa.split("｜", 3)
+                    except ValueError:
+                        # 防御性写法：格式不对就直接原样输出
+                        md += f"- {sa}\n"
+                    else:
+                        md += f"- **{domain}**｜{title}  \n  <{url}>\n"
+                md += "\n"
+            else:
+                md += "### 来源溯源 (Sources)\n\n- _无记录_\n\n"
+            
+            md += "---\n\n"
+
 
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(md)
