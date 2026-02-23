@@ -1,18 +1,15 @@
 # journalist_demo.py
-# Module C: The Journalist (DeepSeek & LangChain Edition)
-# V5.1: Fixed Prompt Template & JSON Escaping
+# Module C: The Journalist (Citation & Evidence Based)
+# 响应评审要求：句句有出处 (Sentence-level Citations)
 
 import os
+import csv
+from datetime import datetime
 from typing import List, Optional
-
-# === 1. 依赖库 ===
-
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
-# 如果这里报错，请把下方终端里的【具体红字】截图发给我！
-# 可能是 "cannot import name 'Field' from 'pydantic'" 这种版本冲突
 
 try:
     from rich.console import Console
@@ -20,180 +17,143 @@ try:
     from rich import box
     console = Console()
 except ImportError:
-    class Console:
-        def print(self, *args, **kwargs): print(*args)
-    console = Console()
+    pass
 
-# === 2. 引用上游数据结构 ===
 try:
     from analyst_demo import Event
 except ImportError:
-    print("❌ 无法找到 analyst_demo.py")
     exit()
 
-# === 3. 数据模型 ===
+# === 数据模型 ===
 class NewsReport(BaseModel):
-    event_id: str = Field(default="", description="内部事件ID (LLM无需填写)")
+    event_id: str = Field(default="")
     title: str = Field(description="专业财经标题")
-    summary: str = Field(description="核心执行摘要")
-    background: str = Field(description="事件背景与历史回溯 (300字+)")
-    analysis: str = Field(description="深度市场分析与逻辑推演 (400字+)")
-    outlook: str = Field(description="未来展望与风险提示 (200字+)")
-    key_points: List[str] = Field(description="关键数据点列表")
-    source_refs: List[str] = Field(description="引用来源列表")
-    impact_score: int = Field(description="影响力评分 0-100")
-    # ⭐ 新增：内部字段，记录“网站 + 标题”
-    source_articles: List[str] = Field(
-        default_factory=list,
-        description="内部字段：用于记录报告所依据的新闻文章（网站｜标题），LLM无需填写"
-    )
+    summary: str = Field(description="摘要")
+    # ⚠️ 这里的文本字段，Prompt 会要求包含 标记
+    background: str = Field(description="背景")
+    analysis: str = Field(description="分析")
+    outlook: str = Field(description="展望")
+    
+    source_mapping: dict = Field(default={}, description="索引到URL的映射，如 {'1': 'http://...'}")
 
-# === 4. 核心类: 撰稿人 Agent ===
-
+# === Journalist Agent ===
 class JournalistAgent:
     def __init__(self):
-        # 1. 初始化 LangChain 的 ChatModel
         api_key = os.getenv("DEEPSEEK_API_KEY") or os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            raise ValueError("❌ Missing API Key. Please set DEEPSEEK_API_KEY in .env")
-
         self.llm = ChatOpenAI(
-            model="deepseek-chat",  # DeepSeek V3
+            model="deepseek-chat",
             openai_api_key=api_key,
             openai_api_base="https://api.deepseek.com", 
-            temperature=0.3,
-            max_tokens=4000
+            temperature=0.2 # 降低温度，确保忠实引用
         )
-        
-        # 2. 初始化解析器
         self.parser = PydanticOutputParser(pydantic_object=NewsReport)
 
-    def write_reports(self, events: List[Event], max_events: int = 3, word_guideline: str = "") -> List[NewsReport]:
-        """批量撰写入口"""
+    def write_reports(self, events: List[Event], max_events=3, word_guideline="") -> List[NewsReport]:
         reports = []
-        if not events:
-            return []
-
         target_events = events[:max_events]
-        console.print(f"[cyan]✍️  DeepSeek Journalist 正在撰写 {len(target_events)} 篇深度研报...[/]")
-        
+        console.print(f"[cyan]✍️  DeepSeek Journalist 正在基于证据撰写 {len(target_events)} 篇研报...[/]")
+
         for i, event in enumerate(target_events, 1):
             try:
-                # 1. 准备素材
-                context_text = ""
-                for art in event.articles:
+                # 1. 构建带索引的 Context
+                # 格式：
+                # [Source 1] 财新网: 央行今日降准...
+                # [Source 2] 证监会官网: 发布新规...
+                context_lines = []
+                mapping = {}
+                for idx, art in enumerate(event.articles, 1):
                     snippet = getattr(art, 'full_text', art.snippet) or art.snippet
-                    context_text += f"- Source: {art.source.outlet_name}\n  Content: {snippet[:800]}...\n\n"
+                    context_lines.append(f"[Source {idx}] 【{art.source.outlet_name}】\n内容: {snippet[:600]}...")
+                    mapping[str(idx)] = f"{art.source.outlet_name}|{art.title}|{art.url}"
 
-                # 2. 生成单篇报告
-                report = self._generate_single_report(context_text, word_guideline)
-                
+                context_str = "\n\n".join(context_lines)
+
+                # 2. 生成报告
+                report = self._generate_report(context_str, word_guideline)
+
                 if report:
-                    # ⭐ 绑定来源事件，方便后续审计 & 溯源
                     report.event_id = event.event_id
-
-                    # 媒体列表（去重），比如 ["stats.gov.cn", "cs.com.cn"]
-                    report.source_refs = list(
-                        {a.source.outlet_name for a in event.articles}
-                    )
-
-                    # ⭐ 记录“网站｜标题”，供你人工检查（可视化）
-                    report.source_articles = [
-                        f"{a.source.domain}｜{a.title}｜{a.url}"
-                        for a in event.articles
-                    ]
-
-                    # 使用 Analyst 给的事件分数作为影响力打分初始值
-                    report.impact_score = int(event.score * 10) if event.score <= 10 else int(event.score)
-
+                    report.source_mapping = mapping
                     reports.append(report)
+                    self._print_preview(report)
 
-                    # 3. 实时展示
-                    self._print_realtime_card(i, report)
-            
             except Exception as e:
-                console.print(f"[red]❌ 撰写失败 (Event #{i}): {e}[/]")
-                continue
-                
+                console.print(f"[red]撰写错误: {e}[/]")
+
+        # 3. 保存来源日志
+        self.save_source_log(target_events)
+
         return reports
 
-    def _generate_single_report(self, article_content: str, word_guideline: str) -> Optional[NewsReport]:
+    def save_source_log(self, events: List[Event], output_dir: str = "source_logs") -> str:
         """
-        LangChain 核心流水线 (修复了 Prompt 转义问题)
+        将所有事件中爬取的文章来源保存为 CSV 文件，便于溯源审计。
+        文件名格式：source_log_YYYYMMDD_HHMMSS.csv
         """
-        
-        # === System Prompt ===
-        # ⚠️ 关键修改 1: 去掉前面的 'f'，不要让 Python 预处理字符串
-        # ⚠️ 关键修改 2: JSON 的花括号必须写成 {{ 和 }} (双花括号)
-        # ⚠️ 关键修改 3: 变量 {word_guideline} 保持单花括号
-        
+        os.makedirs(output_dir, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"source_log_{timestamp}.csv"
+        filepath = os.path.join(output_dir, filename)
+
+        rows = []
+        for event in events:
+            for idx, art in enumerate(event.articles, 1):
+                snippet_preview = (getattr(art, 'full_text', '') or art.snippet or "")[:300]
+                rows.append({
+                    "事件标题": event.main_title,
+                    "事件分类": event.primary_category,
+                    "事件评分": event.score,
+                    "来源序号": idx,
+                    "媒体名称": art.source.outlet_name,
+                    "媒体域名": art.source.domain,
+                    "媒体等级": art.source.tier,
+                    "文章标题": art.title,
+                    "文章URL": art.url,
+                    "内容摘要": snippet_preview,
+                    "发布日期": getattr(art, 'publish_date', ''),
+                })
+
+        with open(filepath, "w", newline="", encoding="utf-8-sig") as f:
+            writer = csv.DictWriter(f, fieldnames=rows[0].keys() if rows else [])
+            writer.writeheader()
+            writer.writerows(rows)
+
+        console.print(f"[green]📄 来源日志已保存：{filepath}（共 {len(rows)} 条记录）[/]")
+        return filepath
+
+    def _generate_report(self, context: str, guideline: str):
+        # ⚡️ 核心 Prompt：强制行内引用 [来源: 媒体名称]
         system_prompt = """
-        你是一名华尔街顶尖的宏观经济分析师。你的任务是根据提供的素材撰写一份**深度财经研报**。
+你是一名严谨的金融分析师。请基于给定的【Source x】素材撰写研报。
 
-        【核心原则】
-        1. **严禁编造**：所有的数字、日期、人名必须来自素材。
-        2. **客观中立**：去除情绪化形容词，使用学术词汇。
-        3. **格式要求**：{word_guideline}
+【关键规则：行内溯源机制】
+1. **必须行内引用**：background 和 analysis 中每一句包含事实的陈述（数字、日期、政策、观点），
+   必须在该句末尾紧接着写上来源媒体名称，格式为 [来源: 媒体名称]。
+   - 正确示例："央行宣布下调MLF利率10个基点 [来源: 财新网]，流动性持续宽松 [来源: 证券时报]。"
+   - 正确示例（多源）："市场成交量创年内新高 [来源: 新浪财经][来源: 第一财经]。"
+   - 错误示例："央行宣布下调MLF利率。"（没有来源标注）
+2. **媒体名称取自素材**：每个 Source 开头标注了【媒体名称】，引用时直接使用该名称，不得自行编造。
+3. **严禁编造内容**：如果素材中没有提到某信息，绝对不要写。
+4. **多源交叉**：同一事实被多家媒体报道时，优先引用官方源（央行、证监会、发改委等）。
+5. summary 和 outlook 不需要行内引用标注。
 
-        【输出格式】
-        你必须严格输出符合以下 JSON 结构的 valid JSON：
-        {{
-            "title": "专业标题",
-            "summary": "150字摘要",
-            "background": "300字+ 深度背景，详述起因",
-            "analysis": "400字+ 核心分析，包含数据支撑和逻辑推演",
-            "outlook": "200字+ 展望与风险提示",
-            "key_points": ["关键点1", "关键点2"],
-            "impact_score": 85,
-            "source_refs": []
-        }}
-        """
+【输出格式】
+输出 JSON，包含 title, summary, background, analysis, outlook。
+"""
+        user_prompt = f"""
+【写作指引】: {guideline}
 
-        # === User Prompt ===
-        user_prompt = """
-        请基于以下素材撰写研报：
-        ---
-        {article_content}
-        ---
-        """
+【可用素材】:
+{context}
 
-        # === 组装 Chain ===
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", system_prompt),
-            ("user", user_prompt)
-        ])
-
-        # Chain: 提示词 -> 大模型 -> 解析器
+请开始撰写：
+"""
+        prompt = ChatPromptTemplate.from_messages([("system", system_prompt), ("user", user_prompt)])
         chain = prompt | self.llm | self.parser
-        
-        # === 执行 ===
-        # ⚠️ 关键修改 4: 在这里传入真正的变量数据
-        return chain.invoke({
-            "word_guideline": word_guideline,
-            "article_content": article_content
-        })
+        return chain.invoke({})
 
-    def _print_realtime_card(self, index: int, report: NewsReport):
-        """UI 辅助"""
-        content = f"[bold]{report.title}[/bold]\n\n"
-        content += f"{report.summary}\n\n"
-        if report.source_articles:
-            content += "[dim]Sources:[/dim]\n"
-            # 只预览前 2 条来源
-            for sa in report.source_articles[:2]:
-                content += f"- {sa}\n"
-            if len(report.source_articles) > 2:
-                content += f"... 共 {len(report.source_articles)} 篇\n\n"
-        content += "[dim]Analysis Preview:[/dim] " + report.analysis[:100] + "..."
-        
-        panel = Panel(
-            content,
-            title=f"[bold green]Draft #{index} Generated[/]",
-            border_style="green",
-            box=box.ROUNDED
-        )
-        console.print(panel)
-
-# 测试代码
-if __name__ == "__main__":
-    pass
+    def _print_preview(self, report):
+        console.print(Panel(
+            f"[bold]{report.title}[/bold]\n\n{report.summary[:150]}...",
+            title="Draft Generated (With Citations)", border_style="green"
+        ))

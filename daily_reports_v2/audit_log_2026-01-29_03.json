@@ -1,0 +1,570 @@
+[
+  {
+    "event_id": "evt_1769730354.0898263_0",
+    "report": {
+      "event_id": "evt_1769730354.0898263_0",
+      "title": "2025年中国规模以上工业企业利润微增0.6%，制造业与私营企业表现分化",
+      "summary_text": "2025年，全国规模以上工业企业实现利润总额73982.0亿元，比上年增长0.6%，扭转了下降态势 [cite: 1]。营业收入增长1.1%至139.20万亿元，但营业成本上升1.3%，导致营业收入利润率微降0.03个百分点至5.31% [cite: 1]。分企业类型看，国有控股企业利润下降3.9%，而外商及港澳台投资企业增长4.2%，私营企业利润与上年持平 [cite: 1]。分行业看，制造业利润增长5.0%，采矿业下降26.2%，电力等行业增长9.4% [cite: 1]。",
+      "background_text": "2025年，中国规模以上工业企业利润数据发布，显示整体利润微增，但不同所有制和行业表现差异显著 [cite: 1]。这延续了近年来工业利润波动的趋势，2024年利润曾出现下降，2025年增长0.6%标志着一定程度的企稳 [cite: 1]。资产总计数据在2025年末更新，但具体数值未在素材中提供，需关注后续发布 [cite: 1]。",
+      "analysis_text": "2025年工业企业利润增长0.6%主要受制造业利润增长5.0%的推动，特别是黑色金属冶炼和压延加工业利润增长3.0倍、有色金属冶炼和压延加工业增长22.6%，以及计算机、通信和其他电子设备制造业增长19.5%等行业表现突出 [cite: 1]。然而，国有控股企业利润下降3.9%和采矿业利润下降26.2%（如煤炭开采和洗选业下降41.8%）拖累了整体增速 [cite: 1]。营业成本增长1.3%高于营业收入增长1.1%，导致利润率微降，反映成本压力持续 [cite: 1]。外商及港澳台投资企业利润增长4.2%和私营企业利润持平，显示外资企业韧性较强，而私营企业增长动力不足 [cite: 1]。",
+      "outlook_text": "未来，工业企业利润增长可能继续分化，制造业和高技术行业如计算机、通信设备有望保持增长势头，但传统行业如采矿业和部分制造业（如化学原料和纺织业下降）面临下行风险 [cite: 1]。成本控制将成为关键，如果营业成本持续上升，可能进一步挤压利润空间 [cite: 1]。政策支持或需聚焦于提振私营企业活力和优化产业结构，以促进整体工业经济稳定 [cite: 1]。",
+      "claims": [
+        {
+          "claim_id": "c_1769730372_1",
+          "claim_text": "2025年，全国规模以上工业企业实现利润总额73982.0亿元，比上年增长0.6%，扭转了下降态势 。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "1"
+          ],
+          "source_urls": [
+            "https://www.stats.gov.cn/sj/zxfb/202601/t20260127_1962382.html"
+          ],
+          "supporting_evidence": [
+            {
+              "source_id": "matched",
+              "source_url": "",
+              "source_outlet": "",
+              "span_text": "Matched via Aligner",
+              "confidence": 0.0
+            }
+          ],
+          "verification_status": "verified",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1769730372_2",
+          "claim_text": "营业收入增长1.1%至139.20万亿元，但营业成本上升1.3%，导致营业收入利润率微降0.03个百分点至5.31% 。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "1"
+          ],
+          "source_urls": [
+            "https://www.stats.gov.cn/sj/zxfb/202601/t20260127_1962382.html"
+          ],
+          "supporting_evidence": [
+            {
+              "source_id": "matched",
+              "source_url": "",
+              "source_outlet": "",
+              "span_text": "Matched via Aligner",
+              "confidence": 0.0
+            }
+          ],
+          "verification_status": "verified",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1769730372_3",
+          "claim_text": "分企业类型看，国有控股企业利润下降3.9%，而外商及港澳台投资企业增长4.2%，私营企业利润与上年持平 。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "1"
+          ],
+          "source_urls": [
+            "https://www.stats.gov.cn/sj/zxfb/202601/t20260127_1962382.html"
+          ],
+          "supporting_evidence": [
+            {
+              "source_id": "matched",
+              "source_url": "",
+              "source_outlet": "",
+              "span_text": "Matched via Aligner",
+              "confidence": 0.0
+            }
+          ],
+          "verification_status": "verified",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1769730372_4",
+          "claim_text": "分行业看，制造业利润增长5.0%，采矿业下降26.2%，电力等行业增长9.4% 。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "1"
+          ],
+          "source_urls": [
+            "https://www.stats.gov.cn/sj/zxfb/202601/t20260127_1962382.html"
+          ],
+          "supporting_evidence": [
+            {
+              "source_id": "matched",
+              "source_url": "",
+              "source_outlet": "",
+              "span_text": "Matched via Aligner",
+              "confidence": 0.0
+            }
+          ],
+          "verification_status": "verified",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1769730372_5",
+          "claim_text": "2025年工业企业利润增长0.6%主要受制造业利润增长5.0%的推动，特别是黑色金属冶炼和压延加工业利润增长3.0倍、有色金属冶炼和压延加工业增长22.6%，以及计算机、通信和其他电子设备制造业增长19.5%等行业表现突出 。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "1"
+          ],
+          "source_urls": [
+            "https://www.stats.gov.cn/sj/zxfb/202601/t20260127_1962382.html"
+          ],
+          "supporting_evidence": [
+            {
+              "source_id": "matched",
+              "source_url": "",
+              "source_outlet": "",
+              "span_text": "Matched via Aligner",
+              "confidence": 0.0
+            }
+          ],
+          "verification_status": "verified",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1769730372_6",
+          "claim_text": "然而，国有控股企业利润下降3.9%和采矿业利润下降26.2%（如煤炭开采和洗选业下降41.8%）拖累了整体增速 。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "1"
+          ],
+          "source_urls": [
+            "https://www.stats.gov.cn/sj/zxfb/202601/t20260127_1962382.html"
+          ],
+          "supporting_evidence": [
+            {
+              "source_id": "matched",
+              "source_url": "",
+              "source_outlet": "",
+              "span_text": "Matched via Aligner",
+              "confidence": 0.0
+            }
+          ],
+          "verification_status": "verified",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1769730372_7",
+          "claim_text": "营业成本增长1.3%高于营业收入增长1.1%，导致利润率微降，反映成本压力持续 。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "1"
+          ],
+          "source_urls": [
+            "https://www.stats.gov.cn/sj/zxfb/202601/t20260127_1962382.html"
+          ],
+          "supporting_evidence": [
+            {
+              "source_id": "matched",
+              "source_url": "",
+              "source_outlet": "",
+              "span_text": "Matched via Aligner",
+              "confidence": 0.0
+            }
+          ],
+          "verification_status": "verified",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1769730372_8",
+          "claim_text": "外商及港澳台投资企业利润增长4.2%和私营企业利润持平，显示外资企业韧性较强，而私营企业增长动力不足 。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "1"
+          ],
+          "source_urls": [
+            "https://www.stats.gov.cn/sj/zxfb/202601/t20260127_1962382.html"
+          ],
+          "supporting_evidence": [
+            {
+              "source_id": "matched",
+              "source_url": "",
+              "source_outlet": "",
+              "span_text": "Matched via Aligner",
+              "confidence": 0.0
+            }
+          ],
+          "verification_status": "verified",
+          "verification_details": {}
+        }
+      ],
+      "source_mapping": {
+        "1": "stats.gov.cn|2025年全国规模以上工业企业利润增长0.6% - 国家统计局|https://www.stats.gov.cn/sj/zxfb/202601/t20260127_1962382.html"
+      },
+      "generated_at": "2026-01-29T18:46:12.522953",
+      "model_used": ""
+    },
+    "alignment_results": [],
+    "status": "PASS",
+    "issues": [],
+    "total_claims": 8,
+    "verified_claims": 8,
+    "failed_claims": 0,
+    "not_found_claims": 0
+  },
+  {
+    "event_id": "evt_1769730354.0898263_1",
+    "report": {
+      "event_id": "evt_1769730354.0898263_1",
+      "title": "2026年1月中旬中国流通领域生产资料价格监测简报",
+      "summary_text": "根据国家统计局监测数据，2026年1月中旬，全国流通领域9大类50种重要生产资料中，29种产品价格上涨，13种下降，8种持平，整体呈现分化态势 [cite: 1]。其中，黑色金属价格小幅上涨，如螺纹钢和线材分别上涨0.3%和0.4% [cite: 1]；有色金属中铝锭和锌锭涨幅显著，分别达1.2%和1.7% [cite: 1]；化工产品价格波动较大，纯苯和聚乙烯均上涨4.4%，而烧碱和乙醇分别下跌3.3%和2.2% [cite: 1]。",
+      "background_text": "中国统计信息服务中心定期发布流通领域重要生产资料市场价格监测报告，旨在反映工业原材料供需动态，为宏观经济分析和政策制定提供参考 [cite: 1]。本次监测覆盖黑色金属、有色金属、化工产品等9大类50种产品，数据基于2026年1月中旬与上旬的对比，延续了以往月度或旬度的价格跟踪机制 [cite: 1]。",
+      "analysis_text": "价格分化主要受供需结构、季节性因素和行业政策影响。黑色金属价格小幅上涨可能反映基建和房地产需求回暖，支撑了螺纹钢和线材等产品 [cite: 1]。有色金属中铝锭和锌锭的显著上涨，可能与新能源和制造业需求增长有关，而铅锭下跌0.6%则暗示部分领域需求疲软 [cite: 1]。化工产品价格波动较大，纯苯和聚乙烯的上涨可能源于石化产业链成本推动或供应紧张，而烧碱和乙醇的下跌则可能反映下游需求不足或库存压力 [cite: 1]。整体来看，价格变动体现了不同行业在宏观经济环境下的差异化表现。",
+      "outlook_text": "未来价格趋势将取决于供需平衡、政策调控和全球经济环境。如果基建投资持续发力，黑色金属价格可能保持温和上涨 [cite: 1]。有色金属价格或继续受新能源转型和制造业复苏驱动，但需警惕供应过剩风险 [cite: 1]。化工产品价格波动性可能较高，受原油价格和环保政策影响显著 [cite: 1]。建议关注后续监测数据以评估整体通胀压力和工业成本变化。",
+      "claims": [
+        {
+          "claim_id": "c_1769730388_1",
+          "claim_text": "根据国家统计局监测数据，2026年1月中旬，全国流通领域9大类50种重要生产资料中，29种产品价格上涨，13种下降，8种持平，整体呈现分化态势 。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "1"
+          ],
+          "source_urls": [
+            "https://www.stats.gov.cn/sj/zxfb/202601/t20260123_1962369.html"
+          ],
+          "supporting_evidence": [
+            {
+              "source_id": "matched",
+              "source_url": "",
+              "source_outlet": "",
+              "span_text": "Matched via Aligner",
+              "confidence": 0.0
+            }
+          ],
+          "verification_status": "verified",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1769730388_2",
+          "claim_text": "其中，黑色金属价格小幅上涨，如螺纹钢和线材分别上涨0.3%和0.4% ；有色金属中铝锭和锌锭涨幅显著，分别达1.2%和1.7% ；化工产品价格波动较大，纯苯和聚乙烯均上涨4.4%，而烧碱和乙醇分别下跌3.3%和2.2% 。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "1",
+            "1",
+            "1"
+          ],
+          "source_urls": [
+            "https://www.stats.gov.cn/sj/zxfb/202601/t20260123_1962369.html",
+            "https://www.stats.gov.cn/sj/zxfb/202601/t20260123_1962369.html",
+            "https://www.stats.gov.cn/sj/zxfb/202601/t20260123_1962369.html"
+          ],
+          "supporting_evidence": [
+            {
+              "source_id": "matched",
+              "source_url": "",
+              "source_outlet": "",
+              "span_text": "Matched via Aligner",
+              "confidence": 0.0
+            }
+          ],
+          "verification_status": "verified",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1769730388_3",
+          "claim_text": "黑色金属价格小幅上涨可能反映基建和房地产需求回暖，支撑了螺纹钢和线材等产品 。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "1"
+          ],
+          "source_urls": [
+            "https://www.stats.gov.cn/sj/zxfb/202601/t20260123_1962369.html"
+          ],
+          "supporting_evidence": [],
+          "verification_status": "conflict",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1769730388_4",
+          "claim_text": "有色金属中铝锭和锌锭的显著上涨，可能与新能源和制造业需求增长有关，而铅锭下跌0.6%则暗示部分领域需求疲软 。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "1"
+          ],
+          "source_urls": [
+            "https://www.stats.gov.cn/sj/zxfb/202601/t20260123_1962369.html"
+          ],
+          "supporting_evidence": [
+            {
+              "source_id": "matched",
+              "source_url": "",
+              "source_outlet": "",
+              "span_text": "Matched via Aligner",
+              "confidence": 0.0
+            }
+          ],
+          "verification_status": "verified",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1769730388_5",
+          "claim_text": "化工产品价格波动较大，纯苯和聚乙烯的上涨可能源于石化产业链成本推动或供应紧张，而烧碱和乙醇的下跌则可能反映下游需求不足或库存压力 。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "1"
+          ],
+          "source_urls": [
+            "https://www.stats.gov.cn/sj/zxfb/202601/t20260123_1962369.html"
+          ],
+          "supporting_evidence": [],
+          "verification_status": "conflict",
+          "verification_details": {}
+        }
+      ],
+      "source_mapping": {
+        "1": "stats.gov.cn|2026年1月中旬流通领域重要生产资料市场价格变动情况|https://www.stats.gov.cn/sj/zxfb/202601/t20260123_1962369.html"
+      },
+      "generated_at": "2026-01-29T18:46:28.600228",
+      "model_used": ""
+    },
+    "alignment_results": [],
+    "status": "FLAGGED",
+    "issues": [
+      "Claim Failed Alignment: 黑色金属价格小幅上涨可能反映基建和房地产需求回暖，支撑了螺纹钢和线材等产品 。",
+      "Claim Failed Alignment: 化工产品价格波动较大，纯苯和聚乙烯的上涨可能源于石化产业链成本推动或供应紧张，而烧碱和乙醇的下跌则可能反映下游需求不足或库存压力 。"
+    ],
+    "total_claims": 5,
+    "verified_claims": 3,
+    "failed_claims": 2,
+    "not_found_claims": 0
+  },
+  {
+    "event_id": "evt_1769730354.0898263_2",
+    "report": {
+      "event_id": "evt_1769730354.0898263_2",
+      "title": "2025年中国工业利润实现小幅增长，高技术制造业表现突出",
+      "summary_text": "根据国家统计局数据，2025年全国规模以上工业企业实现利润总额同比增长0.6%，扭转了2024年下降态势[cite: 1]。其中，高技术制造业利润增长较快，成为工业利润增长的主要支撑[cite: 1]。",
+      "background_text": "2024年，受国内外复杂经济环境影响，中国工业利润曾出现下降[cite: 1]。进入2025年，随着一系列稳增长政策的实施和市场需求的逐步恢复，工业经济运行呈现企稳向好态势[cite: 1]。",
+      "analysis_text": "2025年工业利润实现小幅增长，主要得益于高技术制造业的强劲表现[cite: 1]。该领域利润增长较快，反映出产业结构优化升级的积极成效[cite: 1]。同时，政策支持和企业创新能力的提升也为工业利润恢复提供了动力[cite: 1]。",
+      "outlook_text": "展望未来，工业利润增长仍面临不确定性，包括外部需求波动和原材料价格变化等风险[cite: 1]。但高技术制造业的持续发展有望为工业经济提供稳定支撑[cite: 1]。",
+      "claims": [
+        {
+          "claim_id": "c_1769730397_1",
+          "claim_text": "根据国家统计局数据，2025年全国规模以上工业企业实现利润总额同比增长0.6%，扭转了2024年下降态势。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "1"
+          ],
+          "source_urls": [
+            "https://www.stats.gov.cn/zs/tjwh/tjkw/tjqk/zgxxb/202601/t20260128_1962386.html"
+          ],
+          "supporting_evidence": [
+            {
+              "source_id": "matched",
+              "source_url": "",
+              "source_outlet": "",
+              "span_text": "Matched via Aligner",
+              "confidence": 0.0
+            }
+          ],
+          "verification_status": "verified",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1769730397_2",
+          "claim_text": "其中，高技术制造业利润增长较快，成为工业利润增长的主要支撑。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "1"
+          ],
+          "source_urls": [
+            "https://www.stats.gov.cn/zs/tjwh/tjkw/tjqk/zgxxb/202601/t20260128_1962386.html"
+          ],
+          "supporting_evidence": [],
+          "verification_status": "conflict",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1769730397_3",
+          "claim_text": "2025年工业利润实现小幅增长，主要得益于高技术制造业的强劲表现。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "1"
+          ],
+          "source_urls": [
+            "https://www.stats.gov.cn/zs/tjwh/tjkw/tjqk/zgxxb/202601/t20260128_1962386.html"
+          ],
+          "supporting_evidence": [
+            {
+              "source_id": "matched",
+              "source_url": "",
+              "source_outlet": "",
+              "span_text": "Matched via Aligner",
+              "confidence": 0.0
+            }
+          ],
+          "verification_status": "verified",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1769730397_4",
+          "claim_text": "该领域利润增长较快，反映出产业结构优化升级的积极成效。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "1"
+          ],
+          "source_urls": [
+            "https://www.stats.gov.cn/zs/tjwh/tjkw/tjqk/zgxxb/202601/t20260128_1962386.html"
+          ],
+          "supporting_evidence": [],
+          "verification_status": "conflict",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1769730397_5",
+          "claim_text": "同时，政策支持和企业创新能力的提升也为工业利润恢复提供了动力。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "1"
+          ],
+          "source_urls": [
+            "https://www.stats.gov.cn/zs/tjwh/tjkw/tjqk/zgxxb/202601/t20260128_1962386.html"
+          ],
+          "supporting_evidence": [],
+          "verification_status": "conflict",
+          "verification_details": {}
+        }
+      ],
+      "source_mapping": {
+        "1": "stats.gov.cn|中国信息报2026年1月28日（第7981期） - 国家统计局|https://www.stats.gov.cn/zs/tjwh/tjkw/tjqk/zgxxb/202601/t20260128_1962386.html"
+      },
+      "generated_at": "2026-01-29T18:46:37.384620",
+      "model_used": ""
+    },
+    "alignment_results": [],
+    "status": "FLAGGED",
+    "issues": [
+      "Claim Failed Alignment: 其中，高技术制造业利润增长较快，成为工业利润增长的主要支撑。",
+      "Claim Failed Alignment: 该领域利润增长较快，反映出产业结构优化升级的积极成效。",
+      "Claim Failed Alignment: 同时，政策支持和企业创新能力的提升也为工业利润恢复提供了动力。"
+    ],
+    "total_claims": 5,
+    "verified_claims": 2,
+    "failed_claims": 3,
+    "not_found_claims": 0
+  }
+]

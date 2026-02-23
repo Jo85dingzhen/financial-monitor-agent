@@ -78,16 +78,16 @@ def resolve_source(url: str) -> SourceInfo:
         domain = url.split("/")[2].replace("www.", "")
     except:
         domain = "unknown"
-    
+
     tier = "unknown"
     whitelisted = False
-    
+
     for t, cfg in WHITELIST.items():
         if any(d in domain for d in cfg["domains"]):
             tier = t
             whitelisted = True
             break
-    
+
     return SourceInfo(
         url=url,
         domain=domain,
@@ -95,6 +95,152 @@ def resolve_source(url: str) -> SourceInfo:
         outlet_name=domain,  # 与 main.py 对齐
         whitelisted=whitelisted
     )
+
+
+def _extract_pdf_text(pdf_content: bytes, url: str) -> str:
+    """
+    从 PDF 内容中提取文本
+
+    Args:
+        pdf_content: PDF 文件的字节内容
+        url: PDF 的 URL（用于日志）
+
+    Returns:
+        提取的文本，失败则返回空字符串
+    """
+    try:
+        # 尝试使用 PyPDF2
+        from PyPDF2 import PdfReader
+        from io import BytesIO
+
+        pdf_file = BytesIO(pdf_content)
+        reader = PdfReader(pdf_file)
+
+        text_parts = []
+        # 限制最多读取前 50 页
+        max_pages = min(50, len(reader.pages))
+
+        for page_num in range(max_pages):
+            page = reader.pages[page_num]
+            text = page.extract_text()
+            if text:
+                text_parts.append(text)
+
+        full_text = '\n'.join(text_parts)
+
+        # 清理空白字符
+        full_text = ' '.join(full_text.split())
+
+        # 限制长度
+        max_length = 50000
+        if len(full_text) > max_length:
+            full_text = full_text[:max_length]
+
+        _log(f"      ✓ PDF 文本已提取 ({len(full_text)} 字符, {max_pages} 页)", "debug")
+        return full_text
+
+    except ImportError:
+        _log(f"      ⚠ PyPDF2 未安装，跳过 PDF: {url[:60]}", "debug")
+        _log(f"      💡 提示: pip install PyPDF2", "debug")
+        return ""
+    except Exception:
+        _log(f"      ⚠ PDF 解析失败: {url[:60]}", "debug")
+        return ""
+
+
+def fetch_full_text(url: str, timeout: int = 10) -> str:
+    """
+    抓取网页完整内容（支持 HTML 和 PDF）
+
+    Args:
+        url: 网页 URL
+        timeout: 超时时间（秒）
+
+    Returns:
+        提取的文本内容，失败则返回空字符串
+    """
+    try:
+        # 设置请求头，模拟浏览器
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+
+        # 发送请求
+        response = requests.get(url, headers=headers, timeout=timeout, stream=True)
+        response.raise_for_status()  # 检查HTTP错误
+
+        # 检测是否为 PDF 文件
+        content_type = response.headers.get('Content-Type', '').lower()
+        is_pdf = url.lower().endswith('.pdf') or 'application/pdf' in content_type
+
+        if is_pdf:
+            # PDF 文件处理
+            return _extract_pdf_text(response.content, url)
+
+        # 尝试检测编码（仅 HTML）
+        response.encoding = response.apparent_encoding or 'utf-8'
+
+        # 解析HTML
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        # 移除脚本和样式标签
+        for script in soup(["script", "style", "nav", "footer", "header"]):
+            script.decompose()
+
+        # 提取正文（针对不同网站的常见结构）
+        # 优先查找文章主体容器
+        article_selectors = [
+            'article',
+            '.article-content',
+            '.content',
+            '.post-content',
+            '.main-content',
+            '#article-content',
+            '#content',
+            '.detail-content',
+            '.TRS_Editor'  # 政府网站常用
+        ]
+
+        text_content = ""
+        for selector in article_selectors:
+            if selector.startswith('.'):
+                elements = soup.find_all(class_=selector[1:])
+            elif selector.startswith('#'):
+                elements = [soup.find(id=selector[1:])]
+            else:
+                elements = soup.find_all(selector)
+
+            if elements and elements[0]:
+                text_content = ' '.join([elem.get_text(separator=' ', strip=True)
+                                        for elem in elements if elem])
+                if len(text_content) > 200:  # 如果找到足够长的内容就停止
+                    break
+
+        # 如果没找到特定容器，使用整个 body
+        if not text_content or len(text_content) < 100:
+            body = soup.find('body')
+            if body:
+                text_content = body.get_text(separator=' ', strip=True)
+
+        # 清理空白字符
+        text_content = ' '.join(text_content.split())
+
+        # 限制长度（避免过长）
+        max_length = 50000  # 最多5万字符
+        if len(text_content) > max_length:
+            text_content = text_content[:max_length]
+
+        return text_content
+
+    except requests.exceptions.Timeout:
+        _log(f"    ⏱ 抓取超时: {url[:60]}", "debug")
+        return ""
+    except requests.exceptions.RequestException as e:
+        _log(f"    ✗ 抓取失败: {str(e)[:50]}", "debug")
+        return ""
+    except Exception as e:
+        _log(f"    ✗ 解析失败: {str(e)[:50]}", "debug")
+        return ""
 
 # === 搜索策略 ===
 def _search_ddgs(query: str, region: str = 'wt-wt', timelimit: Optional[str] = None, 
@@ -174,12 +320,13 @@ def _multi_strategy_search(query: str, days: int = 7, fetch_count: int = 30) -> 
     return [], "→".join(strategy_path) + "(失败)"
 
 # === 主采集函数（对外接口） ===
-def gather(queries: List[str], days: int = 3, max_results: int = 5, 
+def gather(queries: List[str], days: int = 3, max_results: int = 5,
           save_json: bool = False, output_path: str = "gathered_results.json",
+          extract_full_text: bool = True,  # 新增参数
           **kwargs) -> List[RawArticle]:
     """
     主采集函数（与 main.py 接口对齐）
-    
+
     Args:
         queries: 查询词列表（支持 site:A OR site:B 语法）
         days: 时间范围（天数）
@@ -191,8 +338,9 @@ def gather(queries: List[str], days: int = 3, max_results: int = 5,
         max_results: 每个 query 最多返回多少条"白名单命中且去重后"的 RawArticle
         save_json: 是否保存 JSON（CLI 调试用，server 模式建议关闭）
         output_path: JSON 保存路径
-        **kwargs: 预留扩展参数（如 extract_full_text, proxy 等）
-    
+        extract_full_text: 是否抓取网页完整内容（默认True，建议开启以支持验证）
+        **kwargs: 预留扩展参数（如 proxy 等）
+
     Returns:
         List[RawArticle]: 采集结果列表
     """
@@ -249,14 +397,24 @@ def gather(queries: List[str], days: int = 3, max_results: int = 5,
             
             _log(f"    ✓ 命中: {source.tier} - {source.domain}", "success")
             _log(f"      {title[:60]}...", "debug")
-            
+
+            # 抓取完整网页内容（如果启用）
+            full_text = ""
+            if extract_full_text:
+                _log(f"      🌐 正在抓取全文...", "debug")
+                full_text = fetch_full_text(url, timeout=10)
+                if full_text:
+                    _log(f"      ✓ 全文已获取 ({len(full_text)} 字符)", "debug")
+                else:
+                    _log(f"      ⚠ 全文抓取失败，使用 snippet", "debug")
+
             # 构造 RawArticle
             article = RawArticle(
                 article_id=hashlib.md5(url.encode()).hexdigest(),
                 url=url,
                 title=title,
                 snippet=snippet,
-                full_text="",  # 如果需要提取全文，在这里调用 extract_body()
+                full_text=full_text,  # 现在填充实际内容
                 source=source,
                 eligible_for_event=True,
                 publish_date=""  # DuckDuckGo 不提供日期，保持为空

@@ -1,0 +1,507 @@
+[
+  {
+    "event_id": "evt_1771876165.7655253_0",
+    "report": {
+      "event_id": "evt_1771876165.7655253_0",
+      "title": "财经数据简报：基于统计来源的近期动态",
+      "summary_text": "本简报基于国家统计局相关来源，概述了近期财经数据动态。由于提供的素材池中，Source 1至Source 4来自tjzd.stats.gov.cn，但内容未具体说明；Source 5来自xjzd.stats.gov.cn，主要为网站结构信息，未提供具体财经数据或事件。因此，简报无法包含关键数据或详细分析，仅基于可用信息进行中立描述。",
+      "background_text": "国家统计局及其地方调查总队（如新疆调查总队）定期发布经济统计数据，包括工业利润、价格指数等，为财经分析提供基础 [cite: 5]。tjzd.stats.gov.cn作为统计来源，可能涉及近期数据更新，但具体内容未在素材中明确 [cite: 1][cite: 2][cite: 3][cite: 4]。",
+      "analysis_text": "由于素材池中缺乏具体财经事实、数据或观点，无法进行深度分析或原因解读。Source 1至Source 4虽标注为近期更新，但未提供可引用内容；Source 5主要展示网站框架，无实质性数据 [cite: 5]。这限制了基于素材的交叉验证或影响评估。",
+      "outlook_text": "未来趋势或风险提示无法基于当前素材推断。建议参考更详细的官方统计报告，以获取准确数据支持分析。素材的局限性提示了依赖多源、具体信息的重要性，以确保财经简报的严谨性和可读性。",
+      "claims": [
+        {
+          "claim_id": "c_1771876175_1",
+          "claim_text": "Source 1至Source 4虽标注为近期更新，但未提供可引用内容；Source 5主要展示网站框架，无实质性数据 。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "5"
+          ],
+          "source_urls": [
+            "http://xjzd.stats.gov.cn/ggbf/qwjs/?channelid=212843&searchword=2025年2季度经济运行报告2022版下册"
+          ],
+          "supporting_evidence": [
+            {
+              "source_id": "matched",
+              "source_url": "",
+              "source_outlet": "",
+              "span_text": "Matched via Aligner",
+              "confidence": 0.0
+            }
+          ],
+          "verification_status": "verified",
+          "verification_details": {}
+        }
+      ],
+      "source_mapping": {
+        "1": "tjzd.stats.gov.cn|tjzd.stats.gov.cn|http://tjzd.stats.gov.cn/system/2026/02/20/030253521.shtml",
+        "2": "tjzd.stats.gov.cn|tjzd.stats.gov.cn|http://tjzd.stats.gov.cn/system/2026/02/18/030252891.shtml",
+        "3": "tjzd.stats.gov.cn|tjzd.stats.gov.cn|http://tjzd.stats.gov.cn/system/2026/02/20/030253526.shtml",
+        "4": "tjzd.stats.gov.cn|tjzd.stats.gov.cn|http://tjzd.stats.gov.cn/system/2026/02/20/030253523.shtml",
+        "5": "xjzd.stats.gov.cn|全文检索_国家统计局新疆调查总队|http://xjzd.stats.gov.cn/ggbf/qwjs/?channelid=212843&searchword=2025年2季度经济运行报告2022版下册"
+      },
+      "generated_at": "2026-02-23T14:49:35.314159",
+      "model_used": ""
+    },
+    "alignment_results": [],
+    "status": "PASS",
+    "issues": [],
+    "total_claims": 1,
+    "verified_claims": 1,
+    "failed_claims": 0,
+    "not_found_claims": 0
+  },
+  {
+    "event_id": "evt_1771876165.7655253_1",
+    "report": {
+      "event_id": "evt_1771876165.7655253_1",
+      "title": "国务院常务会议部署促进有效投资与法规修订工作",
+      "summary_text": "2026年2月6日，国务院总理李强主持召开国务院常务会议，听取2025年国务院部门办理全国人大代表建议和政协提案工作情况汇报，并研究促进有效投资政策措施、部署修订《环境空气质量标准》、讨论《中华人民共和国招标投标法（修订草案）》[cite: 1]。会议指出，促进有效投资对稳定经济增长和增强发展后劲具有重要作用，强调要创新完善政策措施，加力提效用好中央预算内投资、超长期特别国债、地方政府专项债券等资金和新型政策性金融工具[cite: 1]。",
+      "background_text": "本次会议是在全国两会召开在即的背景下举行的，旨在总结过去一年政府工作并规划未来政策方向[cite: 1]。会议回顾了2025年国务院部门办理人大代表建议和政协提案的情况，指出这项工作与贯彻落实党中央决策部署和《政府工作报告》目标任务相结合，推动解决了一批关系改革发展和人民群众急难愁盼的问题[cite: 1]。这体现了政府自觉接受监督、依法履职的内在要求，以及深入践行全过程人民民主的重要体现[cite: 1]。",
+      "analysis_text": "会议聚焦于促进有效投资，这反映了在当前经济环境下，政府将投资作为稳定增长的关键抓手[cite: 1]。通过创新完善政策措施，并利用中央预算内投资、超长期特别国债、地方政府专项债券等工具，政府旨在优化资金使用效率，以支持基础设施、城市更新、公共服务、新兴产业和未来产业等重点领域[cite: 1]。同时，会议讨论修订《环境空气质量标准》和《招标投标法》，表明政府在推动经济发展的同时，也注重环境保护和法规完善，以构建更公平、透明的市场环境[cite: 1]。这些措施可能有助于提升投资质量和可持续性，为“十五五”规划的实施奠定基础[cite: 1]。",
+      "outlook_text": "未来，政府将继续高质量做好人大代表建议和政协提案办理工作，主动听取并采纳代表委员意见建议，以促进政策落实和转化[cite: 1]。在促进有效投资方面，结合“十五五”规划的制定实施，预计将深入谋划推动一批重大项目，着眼于长远发展需要和构筑未来竞争优势[cite: 1]。然而，风险提示包括：投资政策的实施效果可能受宏观经济波动影响，法规修订过程需平衡各方利益，以及环境标准提升可能增加企业合规成本[cite: 1]。总体而言，这些举措有望为经济增长注入新动力，但需密切关注执行细节和市场反应。",
+      "claims": [
+        {
+          "claim_id": "c_1771876186_1",
+          "claim_text": "2026年2月6日，国务院总理李强主持召开国务院常务会议，听取2025年国务院部门办理全国人大代表建议和政协提案工作情况汇报，并研究促进有效投资政策措施、部署修订《环境空气质量标准》、讨论《中华人民共和国招标投标法（修订草案）》。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "1"
+          ],
+          "source_urls": [
+            "https://www.shanwei.gov.cn/swggzy/gzyw/hyxw/content/post_1227060.html"
+          ],
+          "supporting_evidence": [
+            {
+              "source_id": "matched",
+              "source_url": "",
+              "source_outlet": "",
+              "span_text": "Matched via Aligner",
+              "confidence": 0.0
+            }
+          ],
+          "verification_status": "verified",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1771876186_2",
+          "claim_text": "会议指出，促进有效投资对稳定经济增长和增强发展后劲具有重要作用，强调要创新完善政策措施，加力提效用好中央预算内投资、超长期特别国债、地方政府专项债券等资金和新型政策性金融工具。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "1"
+          ],
+          "source_urls": [
+            "https://www.shanwei.gov.cn/swggzy/gzyw/hyxw/content/post_1227060.html"
+          ],
+          "supporting_evidence": [
+            {
+              "source_id": "matched",
+              "source_url": "",
+              "source_outlet": "",
+              "span_text": "Matched via Aligner",
+              "confidence": 0.0
+            }
+          ],
+          "verification_status": "verified",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1771876186_3",
+          "claim_text": "会议聚焦于促进有效投资，这反映了在当前经济环境下，政府将投资作为稳定增长的关键抓手。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "1"
+          ],
+          "source_urls": [
+            "https://www.shanwei.gov.cn/swggzy/gzyw/hyxw/content/post_1227060.html"
+          ],
+          "supporting_evidence": [],
+          "verification_status": "conflict",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1771876186_4",
+          "claim_text": "通过创新完善政策措施，并利用中央预算内投资、超长期特别国债、地方政府专项债券等工具，政府旨在优化资金使用效率，以支持基础设施、城市更新、公共服务、新兴产业和未来产业等重点领域。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "1"
+          ],
+          "source_urls": [
+            "https://www.shanwei.gov.cn/swggzy/gzyw/hyxw/content/post_1227060.html"
+          ],
+          "supporting_evidence": [
+            {
+              "source_id": "matched",
+              "source_url": "",
+              "source_outlet": "",
+              "span_text": "Matched via Aligner",
+              "confidence": 0.0
+            }
+          ],
+          "verification_status": "verified",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1771876186_5",
+          "claim_text": "同时，会议讨论修订《环境空气质量标准》和《招标投标法》，表明政府在推动经济发展的同时，也注重环境保护和法规完善，以构建更公平、透明的市场环境。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "1"
+          ],
+          "source_urls": [
+            "https://www.shanwei.gov.cn/swggzy/gzyw/hyxw/content/post_1227060.html"
+          ],
+          "supporting_evidence": [],
+          "verification_status": "conflict",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1771876186_6",
+          "claim_text": "这些措施可能有助于提升投资质量和可持续性，为“十五五”规划的实施奠定基础。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "1"
+          ],
+          "source_urls": [
+            "https://www.shanwei.gov.cn/swggzy/gzyw/hyxw/content/post_1227060.html"
+          ],
+          "supporting_evidence": [],
+          "verification_status": "conflict",
+          "verification_details": {}
+        }
+      ],
+      "source_mapping": {
+        "1": "shanwei.gov.cn|李强主持召开国务院常务会议听取2025年国务院部门办理全国 ...|https://www.shanwei.gov.cn/swggzy/gzyw/hyxw/content/post_1227060.html"
+      },
+      "generated_at": "2026-02-23T14:49:46.514927",
+      "model_used": ""
+    },
+    "alignment_results": [],
+    "status": "FLAGGED",
+    "issues": [
+      "Claim Failed Alignment: 会议聚焦于促进有效投资，这反映了在当前经济环境下，政府将投资作为稳定增长的关键抓手。",
+      "Claim Failed Alignment: 同时，会议讨论修订《环境空气质量标准》和《招标投标法》，表明政府在推动经济发展的同时，也注重环境保护和法规完善，以构建更公平、透明的市场环境。",
+      "Claim Failed Alignment: 这些措施可能有助于提升投资质量和可持续性，为“十五五”规划的实施奠定基础。"
+    ],
+    "total_claims": 6,
+    "verified_claims": 3,
+    "failed_claims": 3,
+    "not_found_claims": 0
+  },
+  {
+    "event_id": "evt_1771876165.7655253_2",
+    "report": {
+      "event_id": "evt_1771876165.7655253_2",
+      "title": "国务院部署稳经济一揽子政策，聚焦就业、消费与市场主体纾困",
+      "summary_text": "国务院近期通过常务会议部署稳经济一揽子政策措施，重点包括加力稳岗拓岗、扩消费和支持绿色智能家电消费，以稳定就业大局和促进经济增长 [cite: 2]。会议指出，6月份就业形势较4、5月份好转，但任务依然繁重，需通过保市场主体、市场化办法增加岗位等措施应对 [cite: 2]。同时，政策强调释放效能、扩大有效需求，并优化营商环境降低制度性交易成本 [cite: 3]。国家发展改革委等部门于5月31日召开新闻发布会解读相关政策 [cite: 1]。",
+      "background_text": "今年以来，中国经济面临超预期因素冲击，各地各部门加大力度落实稳就业政策，6月份就业形势有所好转 [cite: 2]。前期政策工具已能用尽用，包括退税减税降费等超过2020年规模，并推出稳投资促消费政策 [cite: 3]。国务院向主要经济省份派出工作组进行督导和服务，以解决经济运行中的难点堵点问题 [cite: 3]。灵活就业人员规模达2亿多，被视为促进就业和激发市场活力的重要力量 [cite: 2]。",
+      "analysis_text": "稳就业被置于政策核心，通过保市场主体、创业担保贷款和重点群体帮扶等措施，旨在以发展促就业，支撑经济恢复 [cite: 2]。政策强调市场化社会化办法，如支持创业和灵活就业，以增加就业岗位 [cite: 2]。在扩大有效需求方面，政策通过政策性开发性金融工具、设备更新改造和扩大中长期贷款投放，促进投资和消费，巩固经济恢复基础 [cite: 3]。优化营商环境措施旨在降低制度性交易成本，为市场主体减负激活力 [cite: 3]。这些政策反映了对当前经济恢复紧要关口的应对，强调加快释放政策效能 [cite: 3]。",
+      "outlook_text": "未来政策实施需细化实化接续政策，确保9月上旬实施细则应出尽出，以在三季度形成更多实物工作量 [cite: 3]。风险包括稳就业任务依然繁重，以及市场主体可能面临持续困难 [cite: 2]。政策效能释放和督导服务将继续，以巩固经济恢复基础并增强发展后劲 [cite: 3]。灵活就业保障和服务强化，可能进一步促进就业市场稳定 [cite: 2]。",
+      "claims": [
+        {
+          "claim_id": "c_1771876197_1",
+          "claim_text": "国务院近期通过常务会议部署稳经济一揽子政策措施，重点包括加力稳岗拓岗、扩消费和支持绿色智能家电消费，以稳定就业大局和促进经济增长 。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "2"
+          ],
+          "source_urls": [
+            "https://www.ndrc.gov.cn/fggz/jyysr/jysrsbxf/202207/t20220726_1331315.html"
+          ],
+          "supporting_evidence": [],
+          "verification_status": "conflict",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1771876197_2",
+          "claim_text": "会议指出，6月份就业形势较4、5月份好转，但任务依然繁重，需通过保市场主体、市场化办法增加岗位等措施应对 。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "2"
+          ],
+          "source_urls": [
+            "https://www.ndrc.gov.cn/fggz/jyysr/jysrsbxf/202207/t20220726_1331315.html"
+          ],
+          "supporting_evidence": [
+            {
+              "source_id": "matched",
+              "source_url": "",
+              "source_outlet": "",
+              "span_text": "Matched via Aligner",
+              "confidence": 0.0
+            }
+          ],
+          "verification_status": "verified",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1771876197_3",
+          "claim_text": "同时，政策强调释放效能、扩大有效需求，并优化营商环境降低制度性交易成本 。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "3"
+          ],
+          "source_urls": [
+            "https://www.ndrc.gov.cn/xwdt/gdzt/lsjjylzzcfchjxzc/szyw/202209/t20220923_1336230.html"
+          ],
+          "supporting_evidence": [
+            {
+              "source_id": "matched",
+              "source_url": "",
+              "source_outlet": "",
+              "span_text": "Matched via Aligner",
+              "confidence": 0.0
+            }
+          ],
+          "verification_status": "verified",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1771876197_4",
+          "claim_text": "国家发展改革委等部门于5月31日召开新闻发布会解读相关政策 。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "1"
+          ],
+          "source_urls": [
+            "https://www.ndrc.gov.cn/xwdt/wszb/wzjjylzzccs/?code=&state=123"
+          ],
+          "supporting_evidence": [
+            {
+              "source_id": "matched",
+              "source_url": "",
+              "source_outlet": "",
+              "span_text": "Matched via Aligner",
+              "confidence": 0.0
+            }
+          ],
+          "verification_status": "verified",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1771876197_5",
+          "claim_text": "稳就业被置于政策核心，通过保市场主体、创业担保贷款和重点群体帮扶等措施，旨在以发展促就业，支撑经济恢复 。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "2"
+          ],
+          "source_urls": [
+            "https://www.ndrc.gov.cn/fggz/jyysr/jysrsbxf/202207/t20220726_1331315.html"
+          ],
+          "supporting_evidence": [
+            {
+              "source_id": "matched",
+              "source_url": "",
+              "source_outlet": "",
+              "span_text": "Matched via Aligner",
+              "confidence": 0.0
+            }
+          ],
+          "verification_status": "verified",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1771876197_6",
+          "claim_text": "政策强调市场化社会化办法，如支持创业和灵活就业，以增加就业岗位 。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "2"
+          ],
+          "source_urls": [
+            "https://www.ndrc.gov.cn/fggz/jyysr/jysrsbxf/202207/t20220726_1331315.html"
+          ],
+          "supporting_evidence": [],
+          "verification_status": "conflict",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1771876197_7",
+          "claim_text": "在扩大有效需求方面，政策通过政策性开发性金融工具、设备更新改造和扩大中长期贷款投放，促进投资和消费，巩固经济恢复基础 。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "3"
+          ],
+          "source_urls": [
+            "https://www.ndrc.gov.cn/xwdt/gdzt/lsjjylzzcfchjxzc/szyw/202209/t20220923_1336230.html"
+          ],
+          "supporting_evidence": [
+            {
+              "source_id": "matched",
+              "source_url": "",
+              "source_outlet": "",
+              "span_text": "Matched via Aligner",
+              "confidence": 0.0
+            }
+          ],
+          "verification_status": "verified",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1771876197_8",
+          "claim_text": "优化营商环境措施旨在降低制度性交易成本，为市场主体减负激活力 。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "3"
+          ],
+          "source_urls": [
+            "https://www.ndrc.gov.cn/xwdt/gdzt/lsjjylzzcfchjxzc/szyw/202209/t20220923_1336230.html"
+          ],
+          "supporting_evidence": [
+            {
+              "source_id": "matched",
+              "source_url": "",
+              "source_outlet": "",
+              "span_text": "Matched via Aligner",
+              "confidence": 0.0
+            }
+          ],
+          "verification_status": "verified",
+          "verification_details": {}
+        },
+        {
+          "claim_id": "c_1771876197_9",
+          "claim_text": "这些政策反映了对当前经济恢复紧要关口的应对，强调加快释放政策效能 。",
+          "claim_type": "factual",
+          "entities": [],
+          "metric_type": null,
+          "metric_value": null,
+          "metric_unit": null,
+          "metric_original_text": null,
+          "time_reference": null,
+          "geography": null,
+          "source_ids": [
+            "3"
+          ],
+          "source_urls": [
+            "https://www.ndrc.gov.cn/xwdt/gdzt/lsjjylzzcfchjxzc/szyw/202209/t20220923_1336230.html"
+          ],
+          "supporting_evidence": [],
+          "verification_status": "conflict",
+          "verification_details": {}
+        }
+      ],
+      "source_mapping": {
+        "1": "ndrc.gov.cn|ndrc.gov.cn/xwdt/wszb/wzjjylzzccs/?code=&state=123|https://www.ndrc.gov.cn/xwdt/wszb/wzjjylzzccs/?code=&state=123",
+        "2": "ndrc.gov.cn|ndrc.gov.cn/fggz/jyysr/jysrsbxf/202207/t20220726_1331315.html|https://www.ndrc.gov.cn/fggz/jyysr/jysrsbxf/202207/t20220726_1331315.html",
+        "3": "ndrc.gov.cn|ndrc.gov.cn/xwdt/gdzt/lsjjylzzcfchjxzc/szyw/202209/t20220923...|https://www.ndrc.gov.cn/xwdt/gdzt/lsjjylzzcfchjxzc/szyw/202209/t20220923_1336230.html"
+      },
+      "generated_at": "2026-02-23T14:49:57.506466",
+      "model_used": ""
+    },
+    "alignment_results": [],
+    "status": "FLAGGED",
+    "issues": [
+      "Claim Failed Alignment: 国务院近期通过常务会议部署稳经济一揽子政策措施，重点包括加力稳岗拓岗、扩消费和支持绿色智能家电消费，以稳定就业大局和促进经济增长 。",
+      "Claim Failed Alignment: 政策强调市场化社会化办法，如支持创业和灵活就业，以增加就业岗位 。",
+      "Claim Failed Alignment: 这些政策反映了对当前经济恢复紧要关口的应对，强调加快释放政策效能 。"
+    ],
+    "total_claims": 9,
+    "verified_claims": 6,
+    "failed_claims": 3,
+    "not_found_claims": 0
+  }
+]

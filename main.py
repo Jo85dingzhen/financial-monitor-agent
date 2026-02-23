@@ -35,13 +35,13 @@ try:
     from gather_demo import gather, RawArticle, print_reader_view
     
     # Module B: 分析师
-    from analyst_demo import AnalystAgent, Event, print_analyst_dashboard
+    from analyst_demo import AnalystAgent, Event
     
     # Module C: 撰稿人
     from journalist_demo import JournalistAgent, NewsReport
     
     # Module D: 审计官
-    from auditor_demo import AuditorAgent, AuditResult, print_audit_dashboard
+    from auditor_demo import AuditorAgent, AuditResult
     
     # Module E: 出版商 (新增)
     from publisher_demo import PublisherAgent
@@ -126,7 +126,6 @@ def node_auditor(state: AgentState):
         return {"audit_results": []}
     agent = AuditorAgent()
     results = agent.batch_audit(state["reports"], state["events"])
-    print_audit_dashboard(results)
     return {"audit_results": results}
 
 def node_publisher(state: AgentState):
