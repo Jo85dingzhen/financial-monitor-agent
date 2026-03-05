@@ -52,49 +52,49 @@ ALPHA_WITHOUT_TIER1     = (0.35, 0.65)  # 无tier1来源时（结构权重, LLM�
 TIER1_BONUS_PER_ARTICLE = 0.3    # 每篇tier1文章加成分数，上限1.0
 
 # =======================
-# 一级分类体系
+# 一级分类体系（与 clustering taxonomy_0204.docx Table 1 对齐）
 # =======================
 TAXONOMY_DEFINITIONS = {
     "macro": {
         "name": "宏观经济 & 政策 (Macro)",
-        "desc": "GDP/CPI/LPR/MLF/降息/财政预算/专项债/进出口/就业等宏观数据及国家级政策。",
-        "keywords": "GDP, CPI, PMI, LPR, MLF, 降息, 降准, 财政, 专项债, 社零, 进出口, 失业率, 稳增长, 政治局会议, 国务院",
+        "desc": "涉及国家级经济政策或宏观数据：GDP/CPI/PPI/PMI/LPR/MLF/降息/降准/财政预算/专项债/进出口/就业/稳增长/政治局会议/国务院常务会议等。",
+        "keywords": "GDP, CPI, PPI, PMI, LPR, MLF, 降息, 降准, 财政, 专项债, 减税, 补贴, 社零, 进出口, 失业率, 稳增长, 政治局会议, 国务院, 财政赤字, 公开市场操作",
         "base_score": 10.0,
     },
     "regulation": {
         "name": "金融监管 (Regulation)",
-        "desc": "证监会/银保监/交易所发布的规则、罚单、IPO审核、反垄断。",
-        "keywords": "证监会, 银保监, 金监总局, 交易所, 新规, 罚单, 问询函, IPO, 退市, 反垄断, TLAC, 银行监管",
+        "desc": "金融监管部门（证监会/银保监/金监总局/交易所）发布的规则、公告、罚单、IPO审核、反垄断调查等。",
+        "keywords": "证监会, 银保监, 金监总局, 国家金融监督管理总局, 交易所, 新规, 罚单, 问询函, IPO, 退市, 反垄断, TLAC, 银行监管, 支付牌照, 数字货币, CBDC, 并购审查",
         "base_score": 9.0,
     },
     "market": {
         "name": "资本市场 (Market)",
-        "desc": "A股/港股指数、债市、汇率、北向资金、ETF等市场行情类事件。",
-        "keywords": "A股, 上证指数, 沪深300, 债市, 汇率, 北向资金, ETF, 国债收益率, 波动率, 融资融券",
+        "desc": "资本市场行情类事件：A股/港股指数涨跌、债市、汇率、北向资金、ETF、大宗商品期货价格等，不涉及单一公司。",
+        "keywords": "A股, 上证指数, 沪深300, 港股, 恒生指数, 债市, 国债, 信用债, 汇率, 人民币, 北向资金, 南向资金, ETF, 国债收益率, 信用利差, 波动率, 融资融券, 原油, 铜, 铁矿石, 大宗商品, 期货, 期权",
         "base_score": 8.0,
     },
     "industry": {
         "name": "行业动态 (Industry)",
-        "desc": "行业政策或整体趋势（非单一公司）：新能源/半导体/地产政策/消费升级。",
-        "keywords": "新能源, 半导体, 地产, 消费, AI, 芯片, 碳市场, 医保, 带量采购, 开工率, 产能",
+        "desc": "涉及某一行业的政策或整体趋势（非单一公司）：新能源/半导体/地产政策/消费升级/医保/碳市场等行业面事件。",
+        "keywords": "新能源, 光伏, 风电, 半导体, 芯片, 地产, 限购, 限贷, 消费, 以旧换新, AI, 数字经济, 碳市场, 医保, 带量采购, 仿制药, 创新药, 开工率, 产能, REITs, 铁路, 民航, 物流",
         "base_score": 7.0,
     },
     "company": {
         "name": "公司事件 (Company)",
-        "desc": "单一公司或少量公司的财报、并购、违规、IPO等微观事件。",
-        "keywords": "财报, 业绩预告, 并购重组, 回购, 定增, 违约, 诉讼, 涨停, 人事变动, IPO申请",
+        "desc": "单一公司或少量公司的微观事件：财报/业绩预告/并购重组/高管变动/违规处罚/IPO申请等。",
+        "keywords": "财报, 年报, 半年报, 季报, 业绩预告, 并购重组, 资产剥离, 控股权, 借壳, 回购, 定增, 违约, 诉讼, 财务造假, 内幕交易, 信息披露违规, 涨停, 人事变动, 董事长, CEO, IPO申请, 注册, 首发",
         "base_score": 5.0,
     },
     "other": {
         "name": "杂项 (Other)",
-        "desc": "传闻、小作文、情绪化标题、无权威来源的低质信息，上述均不适用时。",
-        "keywords": "传闻, 小作文, 观点",
+        "desc": "传闻、小作文、情绪化标题、无权威来源的低质信息，或以上五类均不适用的内容。",
+        "keywords": "传闻, 小作文, 观点, 据悉, 消息人士",
         "base_score": 5.0,
     },
 }
 
 # =======================
-# 二级分类体系
+# 二级分类体系（与 clustering taxonomy_0204.docx Table 2 完整对齐）
 # =======================
 SECONDARY_CATEGORIES = {
     "macro":      ["monetary_policy", "fiscal_policy", "economic_data", "trade", "international"],
@@ -103,6 +103,37 @@ SECONDARY_CATEGORIES = {
     "industry":   ["energy", "tech", "consumer", "real_estate", "financial_sector", "healthcare", "transport"],
     "company":    ["earnings", "restructuring", "personnel", "violation", "ipo"],
     "other":      [],
+}
+
+# 二级分类说明（用于 LLM 提示词，帮助精准分类）
+SECONDARY_CATEGORY_DESC = {
+    "monetary_policy":  "央行政策利率调整、存准率变动、公开市场操作（MLF/OMO）、LPR变动",
+    "fiscal_policy":    "财政赤字目标、地方政府专项债、减税降费、补贴政策",
+    "economic_data":    "GDP/CPI/PPI/PMI/社会消费品零售/固定资产投资/外贸数据发布",
+    "trade":            "进出口数据、贸易摩擦、关税政策、汇率干预",
+    "international":    "美联储/ECB等境外央行政策、G7/G20峰会经济议题",
+    "securities":       "证监会公告、上交所/深交所规则修订、IPO/再融资审批、退市政策",
+    "banking":          "银行资本金要求、存款准备金、银行违规处罚、TLAC规则",
+    "insurance":        "保险产品监管、偿付能力规则、险资投资比例调整",
+    "fintech":          "支付牌照、互联网贷款、数字货币（CBDC）监管、数据合规",
+    "antitrust":        "平台经济反垄断、并购审查、数据垄断调查",
+    "equity":           "A股/港股指数涨跌、北向/南向资金、融资融券、大宗交易",
+    "bond":             "国债/地方债/信用债发行与收益率变化、信用利差、违约事件",
+    "fx":               "人民币汇率、中间价机制、外汇储备、跨境资本流动",
+    "commodity":        "原油/铜/铁矿石/农产品期货价格、大宗商品供需",
+    "derivative":       "股指期货/期权、利率互换、信用违约互换（CDS）",
+    "energy":           "新能源政策、光伏/风电装机、煤炭保供、电价改革、碳市场",
+    "tech":             "半导体/AI/数字经济政策、科技出口管制、芯片投资",
+    "consumer":         "消费刺激政策、家电/汽车以旧换新、电商平台趋势",
+    "real_estate":      "限购/限贷松绑、二手房指导价、开发商融资、REITs",
+    "financial_sector": "银行息差、保险投资收益率、信托转型、券商业绩",
+    "healthcare":       "医保政策、仿制药带量采购、创新药审批、医疗器械监管",
+    "transport":        "铁路/民航/港口政策、物流基础设施投资",
+    "earnings":         "上市公司年报/半年报/季报、业绩预告与修正",
+    "restructuring":    "并购重组、资产剥离、控股权转让、借壳上市",
+    "personnel":        "董事长/CEO等高管变动、实控人股权变化",
+    "violation":        "财务造假、内幕交易、信息披露违规、监管处罚",
+    "ipo":              "IPO申报、注册/终止进度、首发定价、上市首日表现",
 }
 
 # =======================
@@ -317,32 +348,72 @@ class AnalystAgent:
             for i, a in enumerate(articles)
         )
 
+        sec_desc_str = "\n".join(
+            f"  {k}: {v}" for k, v in SECONDARY_CATEGORY_DESC.items()
+        )
         system_prompt = f"""你是一名严格遵循分类框架的金融情报分析师。请对以下文章进行聚类、分类并打分。
 
-【一级分类 (category) 必须使用以下代码之一】：
-{json.dumps({k: v['desc'] for k, v in TAXONOMY_DEFINITIONS.items()}, ensure_ascii=False, indent=2)}
-
-【二级分类 (secondary_category) 参考】：
-{json.dumps(SECONDARY_CATEGORIES, ensure_ascii=False, indent=2)}
-
-【聚类规则】
-1. 同一政策批次/同一数据发布/同一会议 → 合并为1个事件
-2. 同一公司一周内两件逻辑独立大事 → 必须拆分
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【一】聚类规则
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. 同一政策批次 / 同一数据发布 / 同一会议 → 合并为 1 个事件
+2. 同一公司一周内两件逻辑独立的重大事件 → 必须拆分
 3. 不同月份的宏观数据 → 必须拆分
+4. 不同层级政府的会议（国务院 vs 省级 vs 县级）→ 必须拆分，不可合并
 
-【评分维度（均为0-10整数）】
-- macro_impact: 对宏观经济的潜在影响深度
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【二】一级分类决策树（category 字段必须严格使用以下代码之一）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Q1: 是否涉及国家级经济政策或宏观数据？
+  ├── YES → category = "macro"
+  │         secondary: monetary_policy / fiscal_policy / economic_data / trade / international
+  └── NO  → Q2
+
+Q2: 是否涉及金融监管部门（证监会/银保监/金监总局/交易所）发布的规则/公告/处罚？
+  ├── YES → category = "regulation"
+  │         secondary: securities / banking / insurance / fintech / antitrust
+  └── NO  → Q3
+
+Q3: 是否为资本市场行情类（指数/债市/汇率/大宗商品价格），且不针对单一公司？
+  ├── YES → category = "market"
+  │         secondary: equity / bond / fx / commodity / derivative
+  └── NO  → Q4
+
+Q4: 是否涉及某一行业的政策或整体趋势（非单一公司）？
+  ├── YES → category = "industry"
+  │         secondary: energy / tech / consumer / real_estate / financial_sector / healthcare / transport
+  └── NO  → Q5
+
+Q5: 是否主要描述单一公司或少量公司的微观事件？
+  ├── YES → category = "company"
+  │         secondary: earnings / restructuring / personnel / violation / ipo
+  └── NO  → category = "other"；secondary = ""
+
+一级分类对应权重分（影响结构评分）：
+{json.dumps({k: v['base_score'] for k, v in TAXONOMY_DEFINITIONS.items()}, ensure_ascii=False)}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【三】二级分类说明（secondary_category 字段参考）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{sec_desc_str}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【四】评分维度（均为 0-10 整数）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- macro_impact:  对宏观经济的潜在影响深度
 - market_impact: 对股/债/汇/商品市场的波动驱动力
-- urgency: 时效紧迫程度（高=需立即关注）
-- long_term: 中长期结构性影响
-- llm_score: 综合以上四维度的最终语义重要性
+- urgency:       时效紧迫程度（10=需立即关注）
+- long_term:     中长期结构性影响程度
+- llm_score:     综合以上四维度的最终语义重要性（0-10整数）
 
-【输出格式】严格输出 JSON：
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【五】输出格式（严格输出 JSON，不含注释）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 {{
   "events": [
     {{
-      "main_title": "事件标准标题",
-      "summary": "关键事实摘要（100字内）",
+      "main_title": "事件标准标题（不超过30字）",
+      "summary": "关键事实摘要（100字内，只含可核查事实，不含分析推断）",
       "article_indices": [0, 2],
       "category": "macro",
       "secondary_category": "monetary_policy",

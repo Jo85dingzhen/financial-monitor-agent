@@ -317,19 +317,31 @@ def main():
     # 2. 构建 Agent
     app = build_agent()
     
-    # 3. 定义查询 (Tier 1 & Tier 2 Sources)
+    # 3. 定义查询 —— 按分类体系分层，与 clustering taxonomy_0204.docx 对齐
     queries = [
-        # === 核心宏观 ===
-        "site:pbc.gov.cn OR site:stats.gov.cn OR site:mof.gov.cn 宏观政策",
-        "site:gov.cn OR site:ndrc.gov.cn 国务院常务会议",
-        
-        # === 金融监管 ===
-        "site:csrc.gov.cn OR site:nfra.gov.cn 金融监管新规",
-        
-        # === 核心财经媒体 (Tier 2) ===
-        "site:caixin.com OR site:yicai.com OR site:21jingji.com 深度报道",
-        "site:cs.com.cn OR site:stcn.com OR site:cnstock.com 资本市场",
-        "site:cls.cn OR site:jiemian.com 财经快讯"
+        # === [macro / monetary_policy + economic_data] ===
+        # 央行 + 统计局：货币政策、宏观数据
+        "site:pbc.gov.cn OR site:stats.gov.cn LPR OR MLF OR GDP OR CPI OR PMI OR 降息 OR 降准",
+
+        # === [macro / fiscal_policy + 国务院] ===
+        # 严格限定国务院官网主域名，避免抓取地方政府转发页
+        "site:www.gov.cn OR site:mof.gov.cn OR site:ndrc.gov.cn 财政 OR 专项债 OR 减税 OR 国务院常务会议",
+
+        # === [regulation / securities + banking] ===
+        # 证监会 + 金融监管总局：监管新规、处罚、IPO
+        "site:csrc.gov.cn OR site:nfra.gov.cn 监管 OR 新规 OR 处罚 OR IPO OR 退市 OR 反垄断",
+
+        # === [market / equity + bond + fx] ===
+        # 资本市场行情：A股、债市、汇率
+        "site:cls.cn OR site:stcn.com A股 OR 债市 OR 汇率 OR 北向资金 OR ETF OR 国债",
+
+        # === [industry] ===
+        # 行业动态：新能源/半导体/地产/消费/医保
+        "site:yicai.com OR site:21jingji.com 新能源 OR 半导体 OR 地产 OR 消费 OR 医保 OR 碳市场 OR AI",
+
+        # === [macro + regulation + company / Tier2综合] ===
+        # 财新 + 界面：深度报道、政策解读、公司大事
+        "site:caixin.com OR site:jiemian.com OR site:cs.com.cn OR site:cnstock.com 深度 OR 政策 OR 财报 OR 并购",
     ]
     
     # 4. 初始化状态

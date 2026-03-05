@@ -44,23 +44,27 @@ WHITELIST = {
     }
 }
 
-# === 数据模型（与 main.py 对齐） ===
-class SourceInfo(BaseModel):
-    url: str
-    domain: str
-    tier: str
-    outlet_name: str  # main.py 需要这个字段
-    whitelisted: bool
+# === 数据模型（统一从 models.py 导入，避免类型不一致导致 Pydantic 校验失败） ===
+try:
+    from models import SourceInfo, RawArticle
+except ImportError:
+    from pydantic import BaseModel
+    class SourceInfo(BaseModel):
+        url: str
+        domain: str
+        tier: str
+        outlet_name: str
+        whitelisted: bool
 
-class RawArticle(BaseModel):
-    article_id: str
-    url: str
-    title: str
-    snippet: str
-    full_text: str = ""
-    source: SourceInfo
-    eligible_for_event: bool = False  # main.py 可能需要
-    publish_date: str = ""
+    class RawArticle(BaseModel):
+        article_id: str
+        url: str
+        title: str
+        snippet: str
+        full_text: str = ""
+        source: SourceInfo
+        eligible_for_event: bool = False
+        publish_date: str = ""
 
 # === 工具函数 ===
 def _log(msg: str, level: str = "info"):
