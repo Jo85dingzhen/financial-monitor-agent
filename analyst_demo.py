@@ -203,18 +203,73 @@ def fuse_scores(struct_score: float, llm_score: float, tier1_count: int) -> floa
 
 
 def detect_region(articles: List[RawArticle]) -> str:
-    """检测事件地域属性"""
-    domestic_kw = ["中国", "国内", "统计局", "发改委", "政治局", "央行", "人民银行", "A股", "深交所", "上交所"]
-    intl_kw     = ["美国", "欧洲", "日本", "全球", "美联储", "Fed", "ECB", "港股", "纳斯达克"]
-    domestic_count = intl_count = 0
+    """
+    检测事件地域属性，返回 domestic / mixed / international。
+
+    判断优先级：
+    1. 来源域名：tier1/tier2 白名单域名为中国机构 → 强国内信号
+    2. 关键词计数：国内关键词 vs 国际关键词加权比较
+    3. 默认兜底：无法判断时归为 domestic（本系统以中国金融为主）
+    """
+    # 强国内信号：来源域名属于中国机构
+    DOMESTIC_DOMAINS = {
+        "pbc.gov.cn", "mof.gov.cn", "gov.cn", "ndrc.gov.cn",
+        "stats.gov.cn", "csrc.gov.cn", "nfra.gov.cn", "safe.gov.cn",
+        "caixin.com", "cls.cn", "yicai.com", "21jingji.com",
+        "sina.com.cn", "news.cn", "stcn.com", "cs.com.cn",
+        "cnstock.com", "financialnews.com.cn", "ce.cn",
+        "jiemian.com", "thepaper.cn", "eeo.com.cn", "nbd.com.cn",
+    }
+
+    # 国内关键词（权重 1）
+    DOMESTIC_KW = [
+        "中国", "国内", "大陆", "内地",
+        "统计局", "发改委", "政治局", "国务院", "人大", "两会",
+        "央行", "人民银行", "银保监", "证监会", "金监总局", "财政部",
+        "A股", "深交所", "上交所", "北交所", "沪深", "创业板", "科创板",
+        "人民币", "CNY", "LPR", "MLF", "OMO",
+        "GDP", "CPI", "PPI", "PMI",  # 在中文语境下均指中国数据
+        "专项债", "城投", "房地产", "限购", "保交楼",
+    ]
+
+    # 国际关键词（权重 1）
+    INTL_KW = [
+        "美国", "美联储", "Fed", "FOMC",
+        "欧洲", "欧央行", "ECB", "欧元区",
+        "日本", "日元", "日银", "BOJ",
+        "英国", "英镑", "英央行", "BOE",
+        "全球", "国际", "跨境", "离岸",
+        "纳斯达克", "标普", "道琼斯", "NYSE",
+        "港股", "恒生", "港元",
+        "G7", "G20", "IMF", "世界银行", "WTO",
+        "制裁", "关税", "贸易战",
+    ]
+
+    domestic_score = 0
+    intl_score = 0
+
     for art in articles:
+        domain = getattr(getattr(art, "source", None), "domain", "") or ""
         text = f"{art.title} {getattr(art, 'full_text', '') or art.snippet}"
-        domestic_count += sum(1 for kw in domestic_kw if kw in text)
-        intl_count     += sum(1 for kw in intl_kw if kw in text)
-    if domestic_count > intl_count * 2:   return "domestic"
-    elif intl_count > domestic_count * 2: return "international"
-    elif domestic_count > 0 and intl_count > 0: return "mixed"
-    return "unknown"
+
+        # 来源域名命中 → 强国内信号（等价于 3 个关键词）
+        if any(d in domain for d in DOMESTIC_DOMAINS):
+            domestic_score += 3
+
+        domestic_score += sum(1 for kw in DOMESTIC_KW if kw in text)
+        intl_score     += sum(1 for kw in INTL_KW     if kw in text)
+
+    # 判断
+    if intl_score == 0:
+        return "domestic"                           # 无任何国际信号 → 国内
+    if domestic_score == 0:
+        return "international"                      # 无任何国内信号 → 国际
+    ratio = domestic_score / (domestic_score + intl_score)
+    if ratio >= 0.75:
+        return "domestic"                           # 国内信号占比 ≥ 75%
+    if ratio <= 0.25:
+        return "international"                      # 国际信号占比 ≥ 75%
+    return "mixed"                                  # 两者都有 → 混合
 
 
 # =======================

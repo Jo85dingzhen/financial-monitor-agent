@@ -44,6 +44,7 @@ ENV/
 daily_reports/
 daily_reports_v2/
 debug_logs/
+gather_debug/
 
 # ================================
 # 采集日志（运行时产物）
@@ -65,3 +66,18 @@ gathered_results.json
 gather_tavily_demo.py
 frontend.py
 server.py
+
+# ================================
+# AI 会话产物（自动生成，不入库）
+# ================================
+SESSION_SUMMARY.md
+IMPROVEMENTS.md
+VERIFICATION_FIX.md
+VERIFICATION_FIX_V2.md
+docs/
+
+# ================================
+# 运行时 JSON 产物
+# ================================
+*.json
+!package.json

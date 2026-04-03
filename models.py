@@ -39,27 +39,9 @@ class VerificationStatus(str, Enum):
 
 # ==========================================
 # Source & Article Models
+# 直接从 gather_demo 导入，避免类型重复导致 Pydantic v2 校验失败
 # ==========================================
-
-class SourceInfo(BaseModel):
-    """Information about a news source"""
-    url: str
-    domain: str
-    tier: str  # tier1, tier2, unknown
-    outlet_name: str
-    whitelisted: bool
-
-
-class RawArticle(BaseModel):
-    """Raw article from gathering phase"""
-    article_id: str
-    url: str
-    title: str
-    snippet: str
-    full_text: str = ""
-    source: SourceInfo
-    eligible_for_event: bool = False
-    publish_date: str = ""
+from gather_demo import SourceInfo, RawArticle  # noqa: F401  (re-export)
 
 
 # ==========================================

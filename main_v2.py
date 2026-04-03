@@ -39,7 +39,7 @@ except ImportError:
 # 请确保所有 v2 模块都在同一目录下
 try:
     # Module A: 采集者 (复用 V1)
-    from gather_demo import gather, RawArticle, print_reader_view
+    from gather_demo import gather, RawArticle, print_reader_view, get_last_time_filtered_items
     
     # Module B: 分析师 (复用 V1)
     from analyst_demo import AnalystAgent, Event
@@ -69,6 +69,7 @@ CONFIG = {
     "search_days": 3,              # 搜索最近 3 天
     "search_max_results": 5,       # 每个关键词抓取数量
     "extract_full_text": True,     # 是否抓取网页完整内容（强烈建议开启以支持验证）
+    "allow_undated_articles": False,  # False=严格时间过滤（无日期文章直接过滤）
 
     # [Module B] 聚类设置 (新增)
     "use_rule_based_clustering": False,  # False=LLM聚类, True=规则聚类
@@ -118,10 +119,37 @@ def node_gather(state: AgentState):
         days=CONFIG["search_days"],
         max_results=CONFIG["search_max_results"],
         save_json=False,
-        extract_full_text=CONFIG["extract_full_text"]  # 启用全文抓取
+        extract_full_text=CONFIG["extract_full_text"],  # 启用全文抓取
+        allow_undated_articles=CONFIG["allow_undated_articles"]
     )
 
     print_reader_view(articles)
+
+    # 输出时间过滤数组预览（调试）
+    time_filtered = get_last_time_filtered_items()
+    if time_filtered:
+        preview_table = Table(
+            title="Time Filtered Items (Preview)",
+            box=box.SIMPLE,
+            header_style="yellow"
+        )
+        preview_table.add_column("#", style="dim", width=3)
+        preview_table.add_column("Date", width=12)
+        preview_table.add_column("Reason", width=12)
+        preview_table.add_column("Title", overflow="fold")
+
+        for i, item in enumerate(time_filtered[:8], 1):
+            preview_table.add_row(
+                str(i),
+                item.get("publish_date", ""),
+                item.get("reason", ""),
+                item.get("title", "")[:80]
+            )
+
+        console.print(preview_table)
+        if len(time_filtered) > 8:
+            console.print(f"[dim]... and {len(time_filtered) - 8} more filtered by time[/]")
+
     return {"raw_articles": articles}
 
 def node_analyst(state: AgentState):
