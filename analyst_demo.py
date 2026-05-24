@@ -21,7 +21,7 @@ except ImportError:
     exit()
 
 try:
-    from gather_demo import RawArticle
+    from models import RawArticle
 except ImportError:
     exit()
 
@@ -288,14 +288,21 @@ class AnalystAgent:
         verbose: bool = True,
         use_rule_based: bool = False,
         enable_quality_check: bool = True,
+        clustering_mode: str = "tfidf_llm",
     ) -> List[Event]:
         if not articles:
             return []
 
         if use_rule_based:
+            clustering_mode = "llm"
+
+        if clustering_mode == "llm":
             console.rule("[bold purple]🟣 Phase 2: 规则驱动聚类 (Rule-Based Clustering)[/]")
             clusterer = RuleBasedClusterer(similarity_threshold=0.4)
             events = clusterer.cluster_articles_rule_based(articles, verbose=verbose)
+        elif clustering_mode == "embedding":
+            console.rule("[bold purple]Phase 2: Embedding + LLM Clustering[/]")
+            events = self._embedding_phase_cluster(articles, verbose=verbose)
         else:
             console.rule("[bold purple]🟣 Phase 2: 两阶段聚类 (TF-IDF + LLM)[/]")
             events = self._two_phase_cluster(articles, verbose=verbose)
@@ -340,6 +347,37 @@ class AnalystAgent:
                 console.print(f"[yellow]  ⚠️ 预分组 {i} LLM处理失败: {e}，使用fallback[/]")
                 fallback = self._fallback_single_event(group)
                 if fallback:
+                    all_events.append(fallback)
+
+        all_events.sort(key=lambda x: x.score, reverse=True)
+        return all_events
+
+    def _embedding_phase_cluster(self, articles: List[RawArticle], verbose: bool = True) -> List[Event]:
+        """Representation layer pregrouping -> LLM refinement."""
+        try:
+            from embedding_engine import EmbeddingEngine
+        except Exception as e:
+            console.print(f"[yellow]Embedding engine unavailable: {e}. Falling back to TF-IDF.[/]")
+            return self._two_phase_cluster(articles, verbose=verbose)
+
+        engine = EmbeddingEngine()
+        groups = engine.cluster_articles(articles)
+        console.print(f"[green]Embedding pregrouping complete: {len(groups)} groups[/]")
+
+        all_events = []
+        for i, group in enumerate(groups, 1):
+            if verbose:
+                console.print(f"[dim]  Embedding group {i}/{len(groups)} ({len(group)} articles)[/]")
+            try:
+                sub_events = self._llm_refine_group(group)
+                for evt in sub_events:
+                    evt.detail["representation_layer"] = "hash_embedding"
+                all_events.extend(sub_events)
+            except Exception as e:
+                console.print(f"[yellow]  Embedding group {i} LLM refine failed: {e}. Using fallback.[/]")
+                fallback = self._fallback_single_event(group)
+                if fallback:
+                    fallback.detail["representation_layer"] = "hash_embedding"
                     all_events.append(fallback)
 
         all_events.sort(key=lambda x: x.score, reverse=True)

@@ -70,11 +70,10 @@ server.py
 # ================================
 # AI 会话产物（自动生成，不入库）
 # ================================
-SESSION_SUMMARY.md
-IMPROVEMENTS.md
-VERIFICATION_FIX.md
-VERIFICATION_FIX_V2.md
-docs/
+/SESSION_SUMMARY.md
+/IMPROVEMENTS.md
+/VERIFICATION_FIX.md
+/VERIFICATION_FIX_V2.md
 
 # ================================
 # 运行时 JSON 产物

@@ -8,7 +8,8 @@ load_dotenv(override=True)
 
 from event_matcher import EventMatcher
 from analyst_demo import AnalystAgent, Event
-from gather_demo import gather, RawArticle, SourceInfo
+from gather_demo import gather
+from models import RawArticle, SourceInfo
 
 from rich.console import Console
 from rich.panel import Panel

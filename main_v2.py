@@ -39,7 +39,7 @@ except ImportError:
 # 请确保所有 v2 模块都在同一目录下
 try:
     # Module A: 采集者 (复用 V1)
-    from gather_demo import gather, RawArticle, print_reader_view, get_last_time_filtered_items
+    from gather_demo import gather, print_reader_view, get_last_time_filtered_items
     
     # Module B: 分析师 (复用 V1)
     from analyst_demo import AnalystAgent, Event
@@ -54,7 +54,7 @@ try:
     from publisher_v2 import PublisherAgentV2
     
     # 数据模型 (新)
-    from models import ClaimBasedReport, VerificationResult
+    from models import RawArticle, ClaimBasedReport, VerificationResult
     
 except ImportError as e:
     console.print(f"[bold red]❌ 模块导入失败: {e}[/]")
@@ -73,6 +73,7 @@ CONFIG = {
 
     # [Module B] 聚类设置 (新增)
     "use_rule_based_clustering": False,  # False=LLM聚类, True=规则聚类
+    "clustering_mode": "tfidf_llm",      # llm / tfidf_llm / embedding
     "enable_quality_validation": True,   # 是否启用聚类质量验证
 
     # [Module C] 撰稿设置
@@ -161,14 +162,15 @@ def node_analyst(state: AgentState):
     agent = AnalystAgent()
 
     # 根据配置选择聚类方法
-    clustering_method = "规则驱动" if CONFIG["use_rule_based_clustering"] else "LLM语义"
+    clustering_method = "规则驱动" if CONFIG["use_rule_based_clustering"] else CONFIG["clustering_mode"]
     console.print(f"[cyan]使用聚类方法: {clustering_method}[/]")
 
     events = agent.cluster_articles(
         state["raw_articles"],
         verbose=True,
         use_rule_based=CONFIG["use_rule_based_clustering"],
-        enable_quality_check=CONFIG["enable_quality_validation"]
+        enable_quality_check=CONFIG["enable_quality_validation"],
+        clustering_mode=CONFIG["clustering_mode"],
     )
 
     # 质量验证已经根据配置自动运行（如果启用）
@@ -320,7 +322,7 @@ def build_agent():
 def main():
     # 1. 启动画面
     console.print("\n")
-    clustering_method = "规则驱动聚类" if CONFIG["use_rule_based_clustering"] else "LLM语义聚类"
+    clustering_method = "规则驱动聚类" if CONFIG["use_rule_based_clustering"] else f"{CONFIG['clustering_mode']} 聚类"
     quality_check = "✅ 启用" if CONFIG["enable_quality_validation"] else "❌ 关闭"
 
     full_text_status = "✅ 启用" if CONFIG["extract_full_text"] else "❌ 关闭"

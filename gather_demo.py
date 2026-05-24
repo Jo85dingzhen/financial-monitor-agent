@@ -9,7 +9,6 @@ import time
 import re
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any, Optional
-from pydantic import BaseModel
 
 # === 依赖检查（静默模式，避免被 import 时打印） ===
 try:
@@ -47,26 +46,7 @@ WHITELIST = {
 }
 
 # === 数据模型（统一从 models.py 导入，避免类型不一致导致 Pydantic 校验失败） ===
-try:
-    from models import SourceInfo, RawArticle
-except ImportError:
-    from pydantic import BaseModel
-    class SourceInfo(BaseModel):
-        url: str
-        domain: str
-        tier: str
-        outlet_name: str
-        whitelisted: bool
-
-    class RawArticle(BaseModel):
-        article_id: str
-        url: str
-        title: str
-        snippet: str
-        full_text: str = ""
-        source: SourceInfo
-        eligible_for_event: bool = False
-        publish_date: str = ""
+from models import SourceInfo, RawArticle
 
 # 最近一次采集的时间过滤数组（调试用）
 LAST_TIME_FILTERED_ITEMS: List[Dict[str, str]] = []

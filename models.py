@@ -41,7 +41,23 @@ class VerificationStatus(str, Enum):
 # Source & Article Models
 # 直接从 gather_demo 导入，避免类型重复导致 Pydantic v2 校验失败
 # ==========================================
-from gather_demo import SourceInfo, RawArticle  # noqa: F401  (re-export)
+class SourceInfo(BaseModel):
+    url: str
+    domain: str
+    tier: str
+    outlet_name: str
+    whitelisted: bool
+
+
+class RawArticle(BaseModel):
+    article_id: str
+    url: str
+    title: str
+    snippet: str
+    full_text: str = ""
+    source: SourceInfo
+    eligible_for_event: bool = False
+    publish_date: str = ""
 
 
 # ==========================================
@@ -167,3 +183,4 @@ class VerificationResult(BaseModel):
     verified_claims: int = 0
     failed_claims: int = 0
     not_found_claims: int = 0
+    skipped_claims: int = 0

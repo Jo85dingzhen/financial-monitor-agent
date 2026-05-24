@@ -39,7 +39,7 @@ class PublisherAgent:
             # 渲染各个板块
             for section in [rep.summary, rep.background, rep.analysis, rep.outlook]:
                 if section:
-                    # [cite_start]可以在这里把 [cite: 1] 替换成 Markdown 链接 [^1]
+                    # 可以在这里把 [cite: 1] 替换成 Markdown 链接 [^1]
                     # 简单起见，保持原样，在底部列出
                     md += f"{section}\n\n"
 

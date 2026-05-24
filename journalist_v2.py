@@ -25,7 +25,12 @@ class ClaimExtractor:
     def __init__(self, client):
         self.client = client
 
-    def extract_claims(self, text: str, source_mapping: dict) -> List[AtomicClaim]:
+    def extract_claims(
+        self,
+        text: str,
+        source_mapping: dict,
+        claim_type: ClaimType = ClaimType.FACTUAL,
+    ) -> List[AtomicClaim]:
         """
         从文本中提取声明
         识别 [cite: X] 标记并提取对应的句子作为声明
@@ -54,13 +59,26 @@ class ClaimExtractor:
                     claim = AtomicClaim(
                         claim_id=f"c_{int(time.time())}_{claim_counter}",
                         claim_text=clean_text,
-                        claim_type=ClaimType.FACTUAL,
+                        claim_type=claim_type,
                         source_ids=cite_matches,
                         source_urls=[source_mapping.get(idx, "").split("|")[2] if "|" in source_mapping.get(idx, "") else ""
                                     for idx in cite_matches]
                     )
                     claims.append(claim)
 
+        return claims
+
+    def extract_claims_from_sections(self, sections: dict, source_mapping: dict) -> List[AtomicClaim]:
+        claims: List[AtomicClaim] = []
+        section_types = {
+            "summary": ClaimType.FACTUAL,
+            "background": ClaimType.FACTUAL,
+            "analysis": ClaimType.FACTUAL,
+            "outlook": ClaimType.ANALYTICAL,
+        }
+        for section_name, claim_type in section_types.items():
+            section_text = sections.get(section_name, "")
+            claims.extend(self.extract_claims(section_text, source_mapping, claim_type))
         return claims
 
 class JournalistAgentV2:
@@ -146,9 +164,10 @@ class JournalistAgentV2:
 1. **中立客观**：使用新闻报道的中性语气，不带个人情绪。
 2. **可读性强**：生成连贯的段落（Paragraphs），而不是零散的表格。
 3. **强制引用**：**每一句话**如果涉及事实、数据或观点，必须在句尾标注来源索引 ``。
-   - [cite_start]✅ 正确：2025年工业利润增长0.6%，扭转了下降态势 [cite: 1][cite_start][cite: 2]。
+   - ✅ 正确：2025年工业利润增长0.6%，扭转了下降态势 [cite: 1][cite: 2]。
+   - ✅ 正确：多家媒体报道该政策影响银行间流动性 [cite: 1][cite: 3]。
    - ❌ 错误：2025年工业利润增长0.6%。(无引用)
-4. [cite_start]**多源交叉**：如果多个来源提到同一事实，尽量同时引用，如 `[cite: 1][cite_start][cite: 3]`。
+4. **多源交叉**：如果多个来源提到同一事实，尽量同时引用，如 `[cite: 1][cite: 3]`。
 
 【输出格式】
 严格输出 JSON 对象：
@@ -172,10 +191,16 @@ class JournalistAgentV2:
             )
             data = json.loads(resp.choices[0].message.content)
             
-            # 3. 后台提取 Claims (为了给 Auditor 进行核验)
-            # 我们把生成的段落拼起来，提取其中的断言用于审计
-            full_text = f"{data.get('summary', '')}\n{data.get('analysis', '')}"
-            claims = self.claim_extractor.extract_claims(full_text, source_mapping)
+            # 3. 后台提取 Claims，覆盖所有报告段落用于审计
+            claims = self.claim_extractor.extract_claims_from_sections(
+                {
+                    "summary": data.get("summary", ""),
+                    "background": data.get("background", ""),
+                    "analysis": data.get("analysis", ""),
+                    "outlook": data.get("outlook", ""),
+                },
+                source_mapping,
+            )
             
             return ClaimBasedReport(
                 event_id=event.event_id,
