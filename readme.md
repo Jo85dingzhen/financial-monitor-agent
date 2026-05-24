@@ -2,9 +2,9 @@
 
 Automated financial monitoring and report generation system.
 
-## Entry Points
+## Entry Point
 
-The default entry point now runs the V2 verified pipeline:
+The default entry point runs the V2 verified pipeline:
 
 ```bash
 python main.py
@@ -14,12 +14,6 @@ V2 flow:
 
 ```text
 Gather -> Analyst -> Journalist V2 -> Verifier -> Publisher V2
-```
-
-The legacy V1 pipeline is preserved as:
-
-```bash
-python main_legacy.py
 ```
 
 ## V2 Focus
