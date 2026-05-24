@@ -184,3 +184,15 @@ class VerificationResult(BaseModel):
     failed_claims: int = 0
     not_found_claims: int = 0
     skipped_claims: int = 0
+    verified_rate: float = 0.0
+    evidence_hit_rate: float = 0.0
+    conflict_rate: float = 0.0
+    not_found_rate: float = 0.0
+    citation_coverage: float = 0.0
+    total_sources_available: int = 0
+    cited_sources: int = 0
+    cited_domains: int = 0
+    citation_diversity_rate: float = 0.0
+    publish_allowed: bool = False
+    publish_reason: str = ""
+    low_source_diversity: bool = False

@@ -8,7 +8,7 @@ from typing import Dict, List
 
 from pydantic import BaseModel, Field
 
-from models import RawArticle
+from models import Event, RawArticle
 
 
 class ArticleEmbedding(BaseModel):
@@ -96,6 +96,40 @@ class EmbeddingEngine:
             groups.append(group)
 
         return groups
+
+    def build_event_representation(self, event: Event) -> EventRepresentation:
+        article_embeddings = [self.embed_article(article) for article in event.articles]
+        if article_embeddings:
+            text_embedding = [
+                sum(embedding.text_embedding[i] for embedding in article_embeddings) / len(article_embeddings)
+                for i in range(self.dimensions)
+            ]
+            norm = math.sqrt(sum(value * value for value in text_embedding)) or 1.0
+            text_embedding = [value / norm for value in text_embedding]
+        else:
+            text_embedding = [0.0] * self.dimensions
+
+        domains = {article.source.domain for article in event.articles}
+        source_scores = [self.source_tier_score(article.source.tier) for article in event.articles]
+        source_score = sum(source_scores) / len(source_scores) if source_scores else 0.0
+        coverage_score = min(1.0, math.log(1 + len(domains)) / math.log(6))
+        category_score = 1.0 if event.primary_category and event.primary_category != "other" else 0.5
+        llm_score = max(0.0, min(1.0, event.score / 10.0))
+        final_score = (0.35 * source_score) + (0.25 * coverage_score) + (0.15 * category_score) + (0.25 * llm_score)
+
+        return EventRepresentation(
+            event_id=event.event_id,
+            text_embedding=text_embedding,
+            source_score=round(source_score, 4),
+            coverage_score=round(coverage_score, 4),
+            category_score=round(category_score, 4),
+            llm_score=round(llm_score, 4),
+            final_score=round(final_score, 4),
+            primary_category=event.primary_category,
+            secondary_category=event.secondary_category,
+            region=event.detail.get("region", "") if event.detail else "",
+            article_ids=[article.article_id for article in event.articles],
+        )
 
     @staticmethod
     def source_tier_score(tier: str) -> float:

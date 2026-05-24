@@ -1,27 +1,28 @@
 # journalist_v2.py
-# Module C v2: The Journalist (Narrative & Citations)
-# 核心目标：生成带有 标记的、流畅的中立新闻稿
+# Module C v2: Journalist with citation-first report generation.
 
-import os
 import csv
 import json
+import os
+import re
 import time
-from typing import List, Optional
 from datetime import datetime
+from typing import List, Optional
 
 try:
     from openai import OpenAI
     from rich.console import Console
-    from rich.panel import Panel
+
     console = Console()
 except ImportError:
     console = None
 
-from models import Event, ClaimBasedReport, AtomicClaim, ClaimType
-import re
+from models import AtomicClaim, ClaimBasedReport, ClaimType, Event
+
 
 class ClaimExtractor:
-    """从文本中提取原子声明（带引用标记）"""
+    """Extract atomic claims from report sections using inline [cite: X] markers."""
+
     def __init__(self, client):
         self.client = client
 
@@ -31,40 +32,36 @@ class ClaimExtractor:
         source_mapping: dict,
         claim_type: ClaimType = ClaimType.FACTUAL,
     ) -> List[AtomicClaim]:
-        """
-        从文本中提取声明
-        识别 [cite: X] 标记并提取对应的句子作为声明
-        """
-        claims = []
-
-        # 按句子分割文本，保留引用标记
-        # 匹配模式：句子 + [cite: X] 或 [cite: X][cite: Y]
-        pattern = r'([^。！？\n]+(?:\[cite:\s*\d+\])+[。！？]?)'
+        claims: List[AtomicClaim] = []
+        pattern = r"([^。！？\n]+(?:\[cite:\s*\d+\])+[。！？]?)"
         matches = re.finditer(pattern, text)
 
         claim_counter = 0
         for match in matches:
             sentence = match.group(1)
+            cite_matches = re.findall(r"\[cite:\s*(\d+)\]", sentence)
+            if not cite_matches:
+                continue
 
-            # 提取所有引用索引
-            cite_pattern = r'\[cite:\s*(\d+)\]'
-            cite_matches = re.findall(cite_pattern, sentence)
+            clean_text = re.sub(r"\[cite:\s*\d+\]", "", sentence).strip()
+            if not clean_text:
+                continue
 
-            if cite_matches:
-                # 移除引用标记，得到纯文本
-                clean_text = re.sub(r'\[cite:\s*\d+\]', '', sentence).strip()
-
-                if clean_text:
-                    claim_counter += 1
-                    claim = AtomicClaim(
-                        claim_id=f"c_{int(time.time())}_{claim_counter}",
-                        claim_text=clean_text,
-                        claim_type=claim_type,
-                        source_ids=cite_matches,
-                        source_urls=[source_mapping.get(idx, "").split("|")[2] if "|" in source_mapping.get(idx, "") else ""
-                                    for idx in cite_matches]
-                    )
-                    claims.append(claim)
+            claim_counter += 1
+            claims.append(
+                AtomicClaim(
+                    claim_id=f"c_{int(time.time())}_{claim_counter}",
+                    claim_text=clean_text,
+                    claim_type=claim_type,
+                    source_ids=cite_matches,
+                    source_urls=[
+                        source_mapping.get(idx, "").split("|")[2]
+                        if "|" in source_mapping.get(idx, "")
+                        else ""
+                        for idx in cite_matches
+                    ],
+                )
+            )
 
         return claims
 
@@ -77,61 +74,66 @@ class ClaimExtractor:
             "outlook": ClaimType.ANALYTICAL,
         }
         for section_name, claim_type in section_types.items():
-            section_text = sections.get(section_name, "")
-            claims.extend(self.extract_claims(section_text, source_mapping, claim_type))
+            claims.extend(
+                self.extract_claims(sections.get(section_name, ""), source_mapping, claim_type)
+            )
         return claims
+
 
 class JournalistAgentV2:
     def __init__(self):
         api_key = os.getenv("DEEPSEEK_API_KEY") or os.getenv("OPENAI_API_KEY")
         self.client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
-        self.claim_extractor = ClaimExtractor(self.client) # 复用原来的提取器用于核验
-    
-    def write_reports(self, events: List[Event], max_events=3, word_guideline="") -> List[ClaimBasedReport]:
-        reports = []
+        self.claim_extractor = ClaimExtractor(self.client)
+
+    def write_reports(
+        self,
+        events: List[Event],
+        max_events: int = 3,
+        word_guideline: str = "",
+    ) -> List[ClaimBasedReport]:
+        reports: List[ClaimBasedReport] = []
         target_events = events[:max_events]
-        for i, event in enumerate(target_events, 1):
+        for event in target_events:
             try:
                 report = self._generate_single_report(event, word_guideline)
-                if report: reports.append(report)
-            except Exception as e:
-                if console: console.print(f"[red]Report gen failed: {e}[/]")
+                if report:
+                    reports.append(report)
+            except Exception as exc:
+                if console:
+                    console.print(f"[red]Report gen failed: {exc}[/]")
 
-        # 保存来源日志
         self.save_source_log(target_events)
-
         return reports
 
     def save_source_log(self, events: List[Event], output_dir: str = "source_logs") -> str:
-        """
-        将所有事件中爬取的文章来源保存为 CSV 文件，便于溯源审计。
-        文件名格式：source_log_YYYYMMDD_HHMMSS.csv
-        """
         os.makedirs(output_dir, exist_ok=True)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"source_log_{timestamp}.csv"
-        filepath = os.path.join(output_dir, filename)
+        filepath = os.path.join(output_dir, f"source_log_{timestamp}.csv")
 
         rows = []
         for event in events:
-            for idx, art in enumerate(event.articles, 1):
-                snippet_preview = (getattr(art, 'full_text', '') or art.snippet or "")[:300]
-                rows.append({
-                    "事件标题": event.main_title,
-                    "事件分类": event.primary_category,
-                    "事件评分": event.score,
-                    "来源序号": idx,
-                    "媒体名称": art.source.outlet_name,
-                    "媒体域名": art.source.domain,
-                    "媒体等级": art.source.tier,
-                    "文章标题": art.title,
-                    "文章URL": art.url,
-                    "内容摘要": snippet_preview,
-                    "发布日期": getattr(art, 'publish_date', ''),
-                })
+            for idx, article in enumerate(event.articles, 1):
+                snippet_preview = (article.full_text or article.snippet or "")[:300]
+                rows.append(
+                    {
+                        "event_title": event.main_title,
+                        "event_category": event.primary_category,
+                        "event_score": event.score,
+                        "source_index": idx,
+                        "outlet_name": article.source.outlet_name,
+                        "domain": article.source.domain,
+                        "tier": article.source.tier,
+                        "article_title": article.title,
+                        "url": article.url,
+                        "snippet_preview": snippet_preview,
+                        "publish_date": article.publish_date,
+                    }
+                )
 
         if not rows:
-            if console: console.print("[yellow]⚠️ 无文章数据，跳过来源日志生成[/]")
+            if console:
+                console.print("[yellow]No source rows; source log skipped[/]")
             return ""
 
         with open(filepath, "w", newline="", encoding="utf-8-sig") as f:
@@ -139,40 +141,47 @@ class JournalistAgentV2:
             writer.writeheader()
             writer.writerows(rows)
 
-        if console: console.print(f"[green]📄 来源日志已保存：{filepath}（共 {len(rows)} 条记录）[/]")
+        if console:
+            console.print(f"[green]Source log saved: {filepath} ({len(rows)} rows)[/]")
         return filepath
-    
+
     def _generate_single_report(self, event: Event, guideline: str) -> Optional[ClaimBasedReport]:
-        # 1. 构建带索引的素材上下文
         context_lines = []
         source_mapping = {}
-        for idx, art in enumerate(event.articles, 1):
-            # 记录来源元数据，供 Publisher 生成 References 列表
-            source_mapping[str(idx)] = f"{art.source.domain}|{art.title}|{art.url}"
-            
-            snippet = getattr(art, 'full_text', art.snippet) or art.snippet
-            context_lines.append(f"[Source {idx}] 【{art.source.outlet_name}】\n{snippet[:800]}...")
-        
+        max_chars_per_source = 1000 if len(event.articles) <= 3 else 700
+
+        for idx, article in enumerate(event.articles, 1):
+            source_mapping[str(idx)] = f"{article.source.domain}|{article.title}|{article.url}"
+            snippet = article.full_text or article.snippet or ""
+            context_lines.append(
+                f"[Source {idx}] 【{article.source.outlet_name} / {article.source.domain}】\n"
+                f"{snippet[:max_chars_per_source]}..."
+            )
+
         context_str = "\n\n".join(context_lines)
-        
-        # 2. 生成正文 (Prose Generation)
-        # ⚡️ 核心 Prompt：要求生成中立、流畅且带引用的文本
+        source_count = len(event.articles)
+        domain_count = len({article.source.domain for article in event.articles})
+
         system_prompt = """
-你是一名中立、严谨的金融新闻主笔。请基于给定的素材撰写一份高质量的财经简报。
+你是一名中立、严谨的金融新闻主笔。请基于给定素材撰写一份高质量财经简报。
 
 【写作要求】
-1. **中立客观**：使用新闻报道的中性语气，不带个人情绪。
-2. **可读性强**：生成连贯的段落（Paragraphs），而不是零散的表格。
-3. **强制引用**：**每一句话**如果涉及事实、数据或观点，必须在句尾标注来源索引 ``。
-   - ✅ 正确：2025年工业利润增长0.6%，扭转了下降态势 [cite: 1][cite: 2]。
-   - ✅ 正确：多家媒体报道该政策影响银行间流动性 [cite: 1][cite: 3]。
-   - ❌ 错误：2025年工业利润增长0.6%。(无引用)
-4. **多源交叉**：如果多个来源提到同一事实，尽量同时引用，如 `[cite: 1][cite: 3]`。
+1. 中立客观：使用新闻报道的中性语气。
+2. 可读性强：生成连贯段落，而不是零散表格。
+3. 强制引用：每一句涉及事实、数据或观点的话，必须在句尾标注来源索引。
+4. 多源交叉：如果多个来源提到同一事实，尽量同时引用，例如 [cite: 1][cite: 3]。
+
+【来源使用要求】
+1. 如果素材池中有 3 个及以上不同来源，summary、background、analysis 至少应使用 3 个不同来源。
+2. 不允许整篇报告只引用同一个来源，除非素材池确实只有一个来源。
+3. 同一事实如有多家来源支持，应使用多个 citation，例如 [cite: 1][cite: 3]。
+4. 如果不同来源信息不一致，不要强行综合，必须写明“不同来源存在表述差异”。
+5. 不得使用素材池之外的信息补充背景。
 
 【输出格式】
 严格输出 JSON 对象：
 {
-    "title": "简练专业的标题",
+    "title": "简洁专业的标题",
     "summary": "150字左右的核心摘要，包含关键数据",
     "background": "事件背景、政策脉络或过往数据",
     "analysis": "深度分析、原因解读或市场影响",
@@ -184,14 +193,20 @@ class JournalistAgentV2:
                 model="deepseek-chat",
                 messages=[
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"【写作指引】{guideline}\n\n【素材池】\n{context_str}"}
+                    {
+                        "role": "user",
+                        "content": (
+                            f"【写作指引】{guideline}\n\n"
+                            f"【来源数量】{source_count} 篇文章，{domain_count} 个不同来源。\n"
+                            "请优先综合多个来源，不要只依赖单一来源。\n\n"
+                            f"【素材池】\n{context_str}"
+                        ),
+                    },
                 ],
                 response_format={"type": "json_object"},
-                temperature=0.2
+                temperature=0.2,
             )
             data = json.loads(resp.choices[0].message.content)
-            
-            # 3. 后台提取 Claims，覆盖所有报告段落用于审计
             claims = self.claim_extractor.extract_claims_from_sections(
                 {
                     "summary": data.get("summary", ""),
@@ -201,19 +216,20 @@ class JournalistAgentV2:
                 },
                 source_mapping,
             )
-            
+
             return ClaimBasedReport(
                 event_id=event.event_id,
                 title=data.get("title", ""),
-                summary_text=data.get("summary", ""),     # 这里存的是给人看的文本
+                summary_text=data.get("summary", ""),
                 background_text=data.get("background", ""),
                 analysis_text=data.get("analysis", ""),
                 outlook_text=data.get("outlook", ""),
-                claims=claims,                            # 这里存的是给机器审的断言
+                claims=claims,
                 source_mapping=source_mapping,
-                generated_at=datetime.now()
+                generated_at=datetime.now(),
+                model_used="deepseek-chat",
             )
-            
-        except Exception as e:
-            if console: console.print(f"[red]Journalist Error: {e}[/]")
+        except Exception as exc:
+            if console:
+                console.print(f"[red]Journalist Error: {exc}[/]")
             return None

@@ -75,6 +75,10 @@ CONFIG = {
     "use_rule_based_clustering": False,  # False=LLM聚类, True=规则聚类
     "clustering_mode": "tfidf_llm",      # llm / tfidf_llm / embedding
     "enable_quality_validation": True,   # 是否启用聚类质量验证
+    "enable_source_enrichment": True,
+    "min_sources_per_event": 3,
+    "max_sources_per_event": 6,
+    "source_enrichment_days": 7,
 
     # [Module C] 撰稿设置
     "report_max_events": 3,        # 最终产出多少篇研报
@@ -106,6 +110,7 @@ class AgentState(TypedDict):
     # ------------------
     
     final_file_path: Optional[str]      # E阶段: 最终文件路径
+    memory_file_path: Optional[str]     # Event memory output
 
 # ==========================================
 # 4. 节点定义 (Nodes)
@@ -177,6 +182,39 @@ def node_analyst(state: AgentState):
     # 地域标签已自动检测并显示在 Dashboard 中
 
     return {"events": events}
+
+def node_source_enrichment(state: AgentState):
+    """Phase 2.5: whitelist-only source enrichment."""
+    console.print("\n")
+    console.rule("[bold cyan]Phase 2.5: Whitelist Source Enrichment[/]")
+
+    if not state["events"]:
+        return {"events": []}
+
+    if not CONFIG["enable_source_enrichment"]:
+        return {"events": state["events"]}
+
+    try:
+        from source_enricher import WhitelistSourceEnricher
+
+        enricher = WhitelistSourceEnricher(
+            min_sources_per_event=CONFIG["min_sources_per_event"],
+            max_sources_per_event=CONFIG["max_sources_per_event"],
+            days=CONFIG["source_enrichment_days"],
+        )
+        events = enricher.enrich_events(state["events"])
+
+        for evt in events:
+            source_count = len({article.source.domain for article in evt.articles})
+            console.print(
+                f"[cyan]{evt.main_title}[/] -> {source_count} sources "
+                f"(added={evt.detail.get('added_source_count', 0)})"
+            )
+
+        return {"events": events}
+    except Exception as e:
+        console.print(f"[yellow]Source enrichment failed: {e}[/]")
+        return {"events": state["events"]}
 
 def node_journalist(state: AgentState):
     """Phase 3: 原子化撰稿 (Atomic Claims)"""
@@ -290,6 +328,25 @@ def node_publisher(state: AgentState):
     
     return {"final_file_path": file_path}
 
+def node_event_memory(state: AgentState):
+    """Phase 6: persist event representations and verification outcomes."""
+    console.print("\n")
+    console.rule("[bold cyan]Phase 6: Event Memory[/]")
+
+    if not state["events"]:
+        return {"memory_file_path": None}
+
+    try:
+        from event_memory import EventMemoryStore
+
+        store = EventMemoryStore()
+        path = store.append_run(state["events"], state["verification_results"])
+        console.print(f"[green]Event memory updated:[/] {path}")
+        return {"memory_file_path": path}
+    except Exception as e:
+        console.print(f"[yellow]Event memory failed: {e}[/]")
+        return {"memory_file_path": None}
+
 # ==========================================
 # 5. 图构建 (Graph Builder)
 # ==========================================
@@ -301,17 +358,21 @@ def build_agent():
     # 添加节点
     workflow.add_node("gather", node_gather)
     workflow.add_node("analyst", node_analyst)
+    workflow.add_node("source_enrichment", node_source_enrichment)
     workflow.add_node("journalist", node_journalist)
     workflow.add_node("verifier", node_verifier)  # V2 新增节点
     workflow.add_node("publisher", node_publisher) # V2 更新节点
+    workflow.add_node("event_memory", node_event_memory)
     
     # 定义边 (线性流程)
     workflow.set_entry_point("gather")
     workflow.add_edge("gather", "analyst")
-    workflow.add_edge("analyst", "journalist")
+    workflow.add_edge("analyst", "source_enrichment")
+    workflow.add_edge("source_enrichment", "journalist")
     workflow.add_edge("journalist", "verifier")   # 关键连接: 稿件 -> 核验
     workflow.add_edge("verifier", "publisher")    # 关键连接: 核验结果 -> 发布
-    workflow.add_edge("publisher", END)
+    workflow.add_edge("publisher", "event_memory")
+    workflow.add_edge("event_memory", END)
     
     return workflow.compile()
 
@@ -381,7 +442,8 @@ def main():
         "events": [],
         "reports": [],
         "verification_results": [],
-        "final_file_path": None
+        "final_file_path": None,
+        "memory_file_path": None
     }
     
     # 5. 运行流水线

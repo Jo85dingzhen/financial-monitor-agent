@@ -371,13 +371,39 @@ class AnalystAgent:
             try:
                 sub_events = self._llm_refine_group(group)
                 for evt in sub_events:
-                    evt.detail["representation_layer"] = "hash_embedding"
+                    representation = engine.build_event_representation(evt)
+                    evt.detail["event_representation"] = {
+                        "representation_layer": "hash_embedding",
+                        "article_ids": representation.article_ids,
+                        "source_score": representation.source_score,
+                        "coverage_score": representation.coverage_score,
+                        "category_score": representation.category_score,
+                        "llm_score": representation.llm_score,
+                        "final_score": representation.final_score,
+                        "primary_category": representation.primary_category,
+                        "secondary_category": representation.secondary_category,
+                        "region": representation.region,
+                        "embedding_dimension": len(representation.text_embedding),
+                    }
                 all_events.extend(sub_events)
             except Exception as e:
                 console.print(f"[yellow]  Embedding group {i} LLM refine failed: {e}. Using fallback.[/]")
                 fallback = self._fallback_single_event(group)
                 if fallback:
-                    fallback.detail["representation_layer"] = "hash_embedding"
+                    representation = engine.build_event_representation(fallback)
+                    fallback.detail["event_representation"] = {
+                        "representation_layer": "hash_embedding",
+                        "article_ids": representation.article_ids,
+                        "source_score": representation.source_score,
+                        "coverage_score": representation.coverage_score,
+                        "category_score": representation.category_score,
+                        "llm_score": representation.llm_score,
+                        "final_score": representation.final_score,
+                        "primary_category": representation.primary_category,
+                        "secondary_category": representation.secondary_category,
+                        "region": representation.region,
+                        "embedding_dimension": len(representation.text_embedding),
+                    }
                     all_events.append(fallback)
 
         all_events.sort(key=lambda x: x.score, reverse=True)

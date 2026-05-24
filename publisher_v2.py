@@ -1,218 +1,195 @@
 # publisher_v2.py
-# Module E v2: The Publisher (Narrative Edition)
-# 核心目标：生成符合人类阅读习惯的 Markdown，同时保留审计痕迹
+# Module E v2: auditable Markdown publisher with publication gate.
 
-import os
 import json
+import os
 from datetime import datetime
 from typing import List, Optional
 
 try:
     from rich.console import Console
     from rich.panel import Panel
+
     console = Console()
 except ImportError:
     console = None
 
 from models import VerificationResult
 
+
 class PublisherAgentV2:
     def __init__(self, output_dir: str = "daily_reports"):
         self.output_dir = output_dir
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+        os.makedirs(output_dir, exist_ok=True)
 
     def _get_next_version_number(self, date_str: str) -> int:
-        """获取指定日期的下一个版本号"""
         import glob
         import re
 
-        # 查找当天所有版本（排除 LATEST）
         pattern = os.path.join(self.output_dir, f"Financial_Briefing_{date_str}_*.md")
-        files = glob.glob(pattern)
-
-        # 提取版本号
         version_numbers = []
-        for f in files:
-            basename = os.path.basename(f)
+        for path in glob.glob(pattern):
+            basename = os.path.basename(path)
             if "LATEST" in basename:
                 continue
-            # 匹配格式: Financial_Briefing_2026-01-29_01.md
-            match = re.search(r'_(\d+)\.md$', basename)
+            match = re.search(r"_(\d+)\.md$", basename)
             if match:
                 version_numbers.append(int(match.group(1)))
-
-        # 返回下一个版本号
         return max(version_numbers, default=0) + 1
 
     def list_reports(self, date: str = None):
-        """列出所有报告版本"""
         import glob
 
-        if date:
-            # 列出特定日期的所有版本
-            pattern = os.path.join(self.output_dir, f"Financial_Briefing_{date}_*.md")
-        else:
-            # 列出所有报告
-            pattern = os.path.join(self.output_dir, "Financial_Briefing_*.md")
-
-        files = sorted(glob.glob(pattern), reverse=True)  # 最新的在前
-
+        pattern = (
+            os.path.join(self.output_dir, f"Financial_Briefing_{date}_*.md")
+            if date
+            else os.path.join(self.output_dir, "Financial_Briefing_*.md")
+        )
+        files = sorted(glob.glob(pattern), reverse=True)
         if console:
             from rich.table import Table
-            table = Table(title=f"📋 报告版本列表 ({len(files)} 份)")
-            table.add_column("文件名", style="cyan")
-            table.add_column("大小", justify="right")
-            table.add_column("修改时间", style="dim")
 
-            for f in files:
-                name = os.path.basename(f)
-                size = os.path.getsize(f) / 1024
-                mtime = datetime.fromtimestamp(os.path.getmtime(f)).strftime("%Y-%m-%d %H:%M:%S")
-                # 标记 LATEST 版本
-                if "LATEST" in name:
-                    name = f"[bold green]{name}[/]"
+            table = Table(title=f"Report versions ({len(files)})")
+            table.add_column("File", style="cyan")
+            table.add_column("Size", justify="right")
+            table.add_column("Modified", style="dim")
+            for path in files:
+                name = os.path.basename(path)
+                size = os.path.getsize(path) / 1024
+                mtime = datetime.fromtimestamp(os.path.getmtime(path)).strftime("%Y-%m-%d %H:%M:%S")
                 table.add_row(name, f"{size:.1f} KB", mtime)
-
             console.print(table)
         else:
-            for f in files:
-                print(os.path.basename(f))
-
+            for path in files:
+                print(os.path.basename(path))
         return files
-    
-    def generate_daily_report(self, verification_results: List[VerificationResult], include_audit_trail: bool = True) -> Optional[str]:
-        if not verification_results: return None
 
-        # 使用日期 + 序号，避免同一天多次运行时覆盖
+    def generate_daily_report(
+        self,
+        verification_results: List[VerificationResult],
+        include_audit_trail: bool = True,
+    ) -> Optional[str]:
+        if not verification_results:
+            return None
+
         now = datetime.now()
         date_str = now.strftime("%Y-%m-%d")
-
-        # 获取下一个版本号
         version_num = self._get_next_version_number(date_str)
-        version_str = f"{date_str}_{version_num:02d}"  # 例如: 2026-01-29_01
-
+        version_str = f"{date_str}_{version_num:02d}"
         file_path = os.path.join(self.output_dir, f"Financial_Briefing_{version_str}.md")
 
-        md = self._generate_markdown(verification_results, date_str)
-
+        markdown = self._generate_markdown(verification_results, date_str)
         with open(file_path, "w", encoding="utf-8") as f:
-            f.write(md)
+            f.write(markdown)
 
-        # 同时保存一个 "LATEST" 版本（固定文件名，方便快速访问）
         latest_path = os.path.join(self.output_dir, f"Financial_Briefing_{date_str}_LATEST.md")
         with open(latest_path, "w", encoding="utf-8") as f:
-            f.write(md)
+            f.write(markdown)
 
-        # 同时保存 JSON 日志（用于追溯，但不展示给普通读者）
         if include_audit_trail:
             self._save_audit_log(verification_results, version_str)
-            # 同样保存 latest 版本的 audit log
             latest_log = os.path.join(self.output_dir, f"audit_log_{date_str}_LATEST.json")
-            audit_data = [res.model_dump(mode='json') for res in verification_results]
             with open(latest_log, "w", encoding="utf-8") as f:
-                json.dump(audit_data, f, ensure_ascii=False, indent=2)
+                json.dump([res.model_dump(mode="json") for res in verification_results], f, ensure_ascii=False, indent=2)
 
         if console:
-            console.print(Panel(
-                f"✅ 报告已发布 (版本 {version_num:02d}):\n"
-                f"  • 版本存档: {file_path}\n"
-                f"  • 最新版本: {latest_path}",
-                style="green",
-                title="Report Published"
-            ))
-
+            console.print(
+                Panel(
+                    f"Report published (version {version_num:02d}):\n"
+                    f"  - Archive: {file_path}\n"
+                    f"  - Latest: {latest_path}",
+                    style="green",
+                    title="Report Published",
+                )
+            )
         return file_path
-    
-    def _generate_markdown(self, results: List[VerificationResult], date_str: str) -> str:
-        # 1. 头部信息
-        md = f"""# 📈 AI Financial Briefing ({date_str})
 
-> **Double-Verified**: Content generated by AI and verified against primary sources.
-> Citations `` indicate the source of information.
+    def _generate_markdown(self, results: List[VerificationResult], date_str: str) -> str:
+        allowed = [result for result in results if result.publish_allowed]
+        flagged = [result for result in results if not result.publish_allowed]
+
+        md = f"""# AI Financial Briefing ({date_str})
+
+> Double-verified: content generated by AI and verified against source evidence.
+> Citations such as `[cite: 1]` point to the reference list under each report.
 
 ---
 
 """
-        
-        for i, result in enumerate(results, 1):
-            report = result.report
-            
-            # 2. 状态徽章 (根据核验结果决定颜色)
-            # PASS -> 🟢, PARTIAL -> 🟡, FLAGGED/FAIL -> 🔴
-            status_icon = "🟢"
-            if result.status == "PARTIAL": status_icon = "🟡 (Audited)"
-            elif result.status in ["FAIL", "FLAGGED"]: status_icon = "🔴 (Flagged)"
-            
-            md += f"## {i}. {report.title} {status_icon}\n\n"
-            
-            # 3. 正文段落 (直接渲染 Journalist 写好的 Prose)
-            # 这里的文本已经包含了
-            if report.summary_text:
-                md += f"{report.summary_text}\n\n"
-            
-            if report.background_text:
-                md += f"**Background**: \n{report.background_text}\n\n"
-                
-            if report.analysis_text:
-                md += f"**Analysis**: \n{report.analysis_text}\n\n"
-                
-            if report.outlook_text:
-                md += f"**Outlook**: \n{report.outlook_text}\n\n"
-            
-            # 4. 参考文献 (References) - 你的核心需求
-            if report.source_mapping:
-                md += "### 📚 References\n"
-                # source_mapping 格式: "domain|title|url"
-                for idx_str, meta in report.source_mapping.items():
-                    try:
-                        domain, title, url = meta.split("|")
-                        md += f"- **[{idx_str}]** {domain}: [{title}]({url})\n"
-                    except ValueError:
-                        # 容错处理
-                        md += f"- **[{idx_str}]** {meta}\n"
-            
-            # 5. 审计备注 (Audit Notes) - 仅当有问题时显示
-            # 我们过滤掉无关痛痒的 issues，只显示真正的风险
-            critical_issues = [iso for iso in result.issues if "Conflict" in iso or "Exaggerated" in iso]
-            if critical_issues:
-                md += "\n> **⚠️ Audit Alerts**:\n"
-                for issue in critical_issues:
-                    md += f"> - {issue}\n"
-            
-            md += "\n---\n"
-            
+        if allowed:
+            md += "## Published Reports\n\n"
+            for index, result in enumerate(allowed, 1):
+                md += self._render_report(index, result)
+        else:
+            md += "## Published Reports\n\nNo report passed the publication gate in this run.\n\n---\n"
+
+        if flagged:
+            md += "\n## Appendix: Flagged Reports Requiring Review\n\n"
+            for index, result in enumerate(flagged, 1):
+                md += self._render_report(index, result, appendix=True)
+
+        return md
+
+    def _render_report(self, index: int, result: VerificationResult, appendix: bool = False) -> str:
+        report = result.report
+        gate = "PASS" if result.publish_allowed else "BLOCKED"
+        heading = "###" if appendix else "##"
+        md = f"{heading} {index}. {report.title} ({gate})\n\n"
+
+        md += (
+            f"> Verified claims: {result.verified_claims} / "
+            f"{max(1, result.verified_claims + result.failed_claims + result.not_found_claims)}  \n"
+            f"> Evidence hit rate: {result.evidence_hit_rate:.1%}  \n"
+            f"> Conflict rate: {result.conflict_rate:.1%}  \n"
+            f"> Not found rate: {result.not_found_rate:.1%}  \n"
+            f"> Citation diversity: {result.citation_diversity_rate:.1%}  \n"
+            f"> Publish gate: {gate} ({result.publish_reason})\n\n"
+        )
+
+        if report.summary_text:
+            md += f"{report.summary_text}\n\n"
+        if report.background_text:
+            md += f"**Background**\n\n{report.background_text}\n\n"
+        if report.analysis_text:
+            md += f"**Analysis**\n\n{report.analysis_text}\n\n"
+        if report.outlook_text:
+            md += f"**Outlook**\n\n{report.outlook_text}\n\n"
+
+        if report.source_mapping:
+            md += "#### References\n\n"
+            for idx_str, meta in report.source_mapping.items():
+                try:
+                    domain, title, url = meta.split("|", 2)
+                    md += f"- **[{idx_str}]** {domain}: [{title}]({url})\n"
+                except ValueError:
+                    md += f"- **[{idx_str}]** {meta}\n"
+            md += "\n"
+
+        if result.issues:
+            md += "#### Audit Notes\n\n"
+            for issue in result.issues:
+                md += f"- {issue}\n"
+            md += "\n"
+
+        md += "---\n\n"
         return md
 
     def _save_audit_log(self, results: List[VerificationResult], version_str: str):
-        """保存详细的 JSON 审计日志（带版本号）"""
         log_path = os.path.join(self.output_dir, f"audit_log_{version_str}.json")
-        audit_data = [res.model_dump(mode='json') for res in results]
         with open(log_path, "w", encoding="utf-8") as f:
-            json.dump(audit_data, f, ensure_ascii=False, indent=2)
-        # 保存日志路径供后续使用
+            json.dump([res.model_dump(mode="json") for res in results], f, ensure_ascii=False, indent=2)
         self._last_log_path = log_path
 
     def print_final_delivery(self, file_path: str):
-        """打印最终交付摘要"""
         if not console:
             return
 
         from rich.tree import Tree
 
-        tree = Tree("📦 [bold green]最终交付物 (Final Deliverables)[/]")
-
-        # 主报告文件
-        tree.add(f"[cyan]研报文件:[/] {file_path}")
-
-        # 审计日志文件（如果存在）
-        if hasattr(self, '_last_log_path') and os.path.exists(self._last_log_path):
-            tree.add(f"[cyan]审计日志:[/] {self._last_log_path}")
-
-        # 显示文件大小
+        tree = Tree("[bold green]Final Deliverables[/]")
+        tree.add(f"[cyan]Report file:[/] {file_path}")
+        if hasattr(self, "_last_log_path") and os.path.exists(self._last_log_path):
+            tree.add(f"[cyan]Audit log:[/] {self._last_log_path}")
         if os.path.exists(file_path):
-            file_size = os.path.getsize(file_path) / 1024
-            tree.add(f"[dim]文件大小: {file_size:.1f} KB[/]")
-
+            tree.add(f"[dim]File size: {os.path.getsize(file_path) / 1024:.1f} KB[/]")
         console.print(tree)
-        console.print(f"\n[bold green]✅ 所有流程已完成！[/]")

@@ -13,6 +13,8 @@ from openai import OpenAI
 from rich.console import Console
 
 from aligners import CompositeAligner
+from evaluation.alignment_eval import evaluate_claim_evidence_alignment
+from evaluation.citation_diversity_eval import evaluate_citation_diversity
 from models import (
     ClaimBasedReport,
     ClaimType,
@@ -209,6 +211,26 @@ class VerifierAgent:
 
         factual_failures = failed_count + not_found_count
         status = "PASS" if not issues else ("PARTIAL" if verified_count and factual_failures else "FLAGGED")
+        factual_claims = verified_count + failed_count + not_found_count
+        verified_rate = verified_count / factual_claims if factual_claims else 0.0
+        evidence_hit_rate = (verified_count + failed_count) / factual_claims if factual_claims else 0.0
+        conflict_rate = failed_count / factual_claims if factual_claims else 0.0
+        not_found_rate = not_found_count / factual_claims if factual_claims else 0.0
+        alignment_metrics = evaluate_claim_evidence_alignment(report)
+        citation_metrics = evaluate_citation_diversity(report, event)
+        low_source_diversity = (
+            citation_metrics["total_sources_available"] >= 3
+            and citation_metrics["cited_domains"] < 3
+        )
+
+        publish_allowed = (
+            status in {"PASS", "PARTIAL"}
+            and verified_rate >= 0.65
+            and conflict_rate <= 0.15
+            and not_found_rate <= 0.25
+            and not low_source_diversity
+        )
+        publish_reason = "PASS" if publish_allowed else "BLOCKED: verification or citation diversity gate failed"
 
         return VerificationResult(
             event_id=report.event_id,
@@ -220,6 +242,18 @@ class VerifierAgent:
             failed_claims=failed_count,
             not_found_claims=not_found_count,
             skipped_claims=skipped_count,
+            verified_rate=verified_rate,
+            evidence_hit_rate=evidence_hit_rate,
+            conflict_rate=conflict_rate,
+            not_found_rate=not_found_rate,
+            citation_coverage=alignment_metrics["citation_coverage"],
+            total_sources_available=int(citation_metrics["total_sources_available"]),
+            cited_sources=int(citation_metrics["cited_sources"]),
+            cited_domains=int(citation_metrics["cited_domains"]),
+            citation_diversity_rate=float(citation_metrics["citation_diversity_rate"]),
+            publish_allowed=publish_allowed,
+            publish_reason=publish_reason,
+            low_source_diversity=low_source_diversity,
         )
 
     def _run_adversarial_check(self, report: ClaimBasedReport, event: Event) -> List[str]:
@@ -239,6 +273,10 @@ class VerifierAgent:
                 report.outlook_text,
             ]
         )
+        if not source_text.strip():
+            return ["Adversarial check skipped: empty source text"]
+        if not report_text.strip():
+            return ["Adversarial check skipped: empty report text"]
 
         prompt = f"""
 You are a financial fact-checking auditor.
@@ -306,6 +344,16 @@ def print_verification_dashboard(results: List[VerificationResult]):
             f"{res.not_found_claims} not found | "
             f"{res.skipped_claims} skipped"
         )
+        console.print(
+            "   Metrics: "
+            f"verified_rate={res.verified_rate:.1%} | "
+            f"evidence_hit_rate={res.evidence_hit_rate:.1%} | "
+            f"conflict_rate={res.conflict_rate:.1%} | "
+            f"citation_diversity={res.citation_diversity_rate:.1%}"
+        )
+        gate = "PASS" if res.publish_allowed else "BLOCKED"
+        gate_color = "green" if res.publish_allowed else "red"
+        console.print(f"   Publish gate: [{gate_color}]{gate}[/] ({res.publish_reason})")
 
         if res.issues:
             console.print(f"   [red]Issues found: {len(res.issues)}[/]")
